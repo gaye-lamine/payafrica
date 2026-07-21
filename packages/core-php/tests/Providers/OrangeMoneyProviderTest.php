@@ -11,9 +11,9 @@ use GuzzleHttp\Psr7\Response;
 use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
 use PayAfrica\Sdk\Exceptions\ProviderException;
 use PayAfrica\Sdk\Providers\OrangeMoneyProvider;
-use PayAfrica\Sdk\Tests\Contract\AbstractProviderContractTest;
+use PayAfrica\Sdk\Tests\Contract\AbstractProviderContract;
 
-final class OrangeMoneyProviderTest extends AbstractProviderContractTest
+final class OrangeMoneyProviderTest extends AbstractProviderContract
 {
     protected function createProvider(): PaymentProviderInterface
     {

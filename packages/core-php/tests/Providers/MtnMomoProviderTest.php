@@ -12,9 +12,9 @@ use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
 use PayAfrica\Sdk\DTO\PaymentRequest;
 use PayAfrica\Sdk\Enums\PaymentStatus;
 use PayAfrica\Sdk\Providers\MtnMomoProvider;
-use PayAfrica\Sdk\Tests\Contract\AbstractProviderContractTest;
+use PayAfrica\Sdk\Tests\Contract\AbstractProviderContract;
 
-final class MtnMomoProviderTest extends AbstractProviderContractTest
+final class MtnMomoProviderTest extends AbstractProviderContract
 {
     protected function createProvider(): PaymentProviderInterface
     {

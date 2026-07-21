@@ -6,9 +6,9 @@ namespace PayAfrica\Sdk\Tests\Providers;
 
 use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
 use PayAfrica\Sdk\Providers\TemplateProvider;
-use PayAfrica\Sdk\Tests\Contract\AbstractProviderContractTest;
+use PayAfrica\Sdk\Tests\Contract\AbstractProviderContract;
 
-final class TemplateProviderTest extends AbstractProviderContractTest
+final class TemplateProviderTest extends AbstractProviderContract
 {
     protected function setUp(): void
     {

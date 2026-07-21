@@ -90,7 +90,7 @@ final class OrangeMoneyProvider implements PaymentProviderInterface
             throw new ProviderException(PaymentError::Unknown, 'Incomplete Orange Money webhook payload');
         }
 
-        return new PaymentEvent((string) ($payload['id'] ?? $sessionId), $sessionId, $this->status($status), (string) ($payload['timestamp'] ?? gmdate(DATE_ATOM)), isset($payload['reference']) ? (string) $payload['reference'] : null);
+        return new PaymentEvent((string) ($payload['id'] ?? $payload['transactionId'] ?? $sessionId), $sessionId, $this->status($status), (string) ($payload['timestamp'] ?? gmdate(DATE_ATOM)), isset($payload['reference']) ? (string) $payload['reference'] : null);
     }
 
     public function refund(string $sessionId, ?int $amount = null): RefundResult

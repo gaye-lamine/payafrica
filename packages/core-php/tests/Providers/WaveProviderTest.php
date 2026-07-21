@@ -10,9 +10,9 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
 use PayAfrica\Sdk\Providers\WaveProvider;
-use PayAfrica\Sdk\Tests\Contract\AbstractProviderContractTest;
+use PayAfrica\Sdk\Tests\Contract\AbstractProviderContract;
 
-final class WaveProviderTest extends AbstractProviderContractTest
+final class WaveProviderTest extends AbstractProviderContract
 {
     private const SECRET = 'wave-secret';
 

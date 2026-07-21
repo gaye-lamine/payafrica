@@ -9,7 +9,7 @@ use PayAfrica\Sdk\DTO\PaymentRequest;
 use PayAfrica\Sdk\Enums\PaymentStatus;
 use PHPUnit\Framework\TestCase;
 
-abstract class AbstractProviderContractTest extends TestCase
+abstract class AbstractProviderContract extends TestCase
 {
     abstract protected function createProvider(): PaymentProviderInterface;
 
