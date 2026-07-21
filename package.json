@@ -1,0 +1,10 @@
+{
+  "name": "payafrica-sdk",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "npm --workspace @payafrica/core-node test"
+  }
+}

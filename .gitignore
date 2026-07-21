@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.*.example
+vendor/
+.phpunit.cache/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/

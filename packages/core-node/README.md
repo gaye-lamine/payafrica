@@ -1,0 +1,114 @@
+# PayAfrica Core Node
+
+SDK TypeScript strict pour les paiements Orange Money, Wave et MTN MoMo.
+
+## Installation
+
+```bash
+npm install @payafrica/core-node
+# ou
+pnpm add @payafrica/core-node
+# ou
+yarn add @payafrica/core-node
+```
+
+## Configuration et initialisation
+
+Créez un adaptateur pour le provider choisi, puis injectez-le dans `PayAfrica`.
+
+```ts
+import { PayAfrica } from "@payafrica/core-node";
+import { WaveProvider } from "@payafrica/core-node/providers/wave";
+
+const provider = new WaveProvider({
+  apiKey: process.env.WAVE_API_KEY!,
+  webhookSecret: process.env.WAVE_WEBHOOK_SECRET!,
+});
+
+const payafrica = new PayAfrica(provider);
+```
+
+Variables `.env` :
+
+```dotenv
+# Orange Money Sénégal
+ORANGE_MONEY_CLIENT_ID=
+ORANGE_MONEY_CLIENT_SECRET=
+ORANGE_MONEY_MERCHANT_CODE=
+ORANGE_MONEY_SITENAME=
+ORANGE_MONEY_CALLBACK_URL=
+ORANGE_MONEY_WEBHOOK_API_KEY=
+ORANGE_MONEY_ENVIRONMENT=sandbox
+
+# Wave Sénégal
+WAVE_API_KEY=
+WAVE_WEBHOOK_SECRET=
+
+# MTN MoMo Collection
+MTN_MOMO_SUBSCRIPTION_KEY=
+MTN_MOMO_API_USER=
+MTN_MOMO_API_KEY=
+MTN_MOMO_TARGET_ENVIRONMENT=sandbox
+MTN_MOMO_DEFAULT_CURRENCY=XOF
+```
+
+Pour Orange Money, construisez `OrangeMoneyProvider` avec `clientId`, `clientSecret`, `merchantCode`, `sitename`, `callbackUrl`, `webhookApiKey` et `environment`. Pour MTN, construisez `MtnMomoProvider` avec `subscriptionKey`, `apiUser`, `apiKey`, `targetEnvironment` et `defaultCurrency`.
+
+## Flux de paiement complet
+
+```ts
+import express from "express";
+
+const app = express();
+
+// 1. Créer une session.
+const session = await payafrica.initiatePayment({
+  amount: 1_000,
+  currency: "XOF",
+  reference: "order-123",
+  customerPhone: "+221770000000",
+  successUrl: "https://merchant.example/payments/success",
+  failureUrl: "https://merchant.example/payments/failed",
+});
+
+// Redirigez vers session.paymentUrl quand le flux provider en fournit une.
+
+// 2. Vérifier le statut.
+const status = await payafrica.checkStatus(session.id);
+
+// 3. Le body brut est indispensable : placez cette route avant express.json().
+app.post("/webhooks/payments", express.raw({ type: "application/json" }), async (req, res) => {
+  try {
+    const event = await payafrica.handleWebhook(req.body, req.headers);
+    // Rendez ce traitement idempotent avec event.id.
+    res.sendStatus(204);
+  } catch {
+    res.sendStatus(401);
+  }
+});
+
+// 4. Rembourser. Wave et MTN prennent en charge ce flux ; Orange le rejette explicitement.
+const refund = await payafrica.refund(session.id, 500);
+```
+
+## Erreurs normalisées
+
+| PaymentError | Orange Money | Wave | MTN MoMo |
+| --- | --- | --- | --- |
+| `INSUFFICIENT_FUNDS` | Codes Sonatel `2020`, `2021` | `insufficient-funds` | `NOT_ENOUGH_FUNDS` |
+| `PROVIDER_TIMEOUT` | Codes techniques Sonatel | HTTP 5xx ou timeout | HTTP 5xx ou timeout |
+| `INVALID_PHONE` | Codes `2000`, `2001` | `payer-mobile-mismatch` | Validation MSISDN/provider |
+| `USER_CANCELLED` | Annulation du payeur | Paiement annulé | `APPROVAL_REJECTED`, `EXPIRED` |
+| `UNKNOWN` | Toute autre réponse | Toute autre réponse | Toute autre réponse |
+
+Les erreurs adapter sont rejetées avec leur code `PaymentError`. Ne confirmez jamais une commande sur un timeout : vérifiez ensuite le statut du provider.
+
+## Tests
+
+```bash
+npm test
+# ou
+pnpm test
+```
+
+Les tests Vitest incluent les scénarios de contrat pour Orange Money, Wave et MTN MoMo.

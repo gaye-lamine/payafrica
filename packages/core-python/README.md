@@ -1,0 +1,111 @@
+# PayAfrica Core Python
+
+SDK Python 3.10+ asynchrone, avec modèles Pydantic v2 immuables et HTTPX.
+
+## Installation
+
+```bash
+pip install payafrica-sdk
+# ou
+poetry add payafrica-sdk
+```
+
+Pour développer ce package :
+
+```bash
+poetry install
+```
+
+## Configuration et initialisation
+
+Injectez un `httpx.AsyncClient` dans le provider choisi.
+
+```python
+import os
+import httpx
+
+from payafrica import PayAfrica
+from payafrica.providers import WaveProvider
+
+client = httpx.AsyncClient()
+provider = WaveProvider(
+    client,
+    api_key=os.environ["WAVE_API_KEY"],
+    webhook_secret=os.environ["WAVE_WEBHOOK_SECRET"],
+)
+payafrica = PayAfrica(provider)
+```
+
+Variables `.env` :
+
+```dotenv
+ORANGE_MONEY_CLIENT_ID=
+ORANGE_MONEY_CLIENT_SECRET=
+ORANGE_MONEY_MERCHANT_CODE=
+ORANGE_MONEY_SITENAME=
+ORANGE_MONEY_CALLBACK_URL=
+ORANGE_MONEY_WEBHOOK_API_KEY=
+ORANGE_MONEY_ENVIRONMENT=sandbox
+WAVE_API_KEY=
+WAVE_WEBHOOK_SECRET=
+MTN_MOMO_SUBSCRIPTION_KEY=
+MTN_MOMO_API_USER=
+MTN_MOMO_API_KEY=
+MTN_MOMO_TARGET_ENVIRONMENT=sandbox
+MTN_MOMO_DEFAULT_CURRENCY=XOF
+```
+
+## Flux de paiement complet
+
+```python
+from fastapi import FastAPI, Request
+from payafrica import PaymentRequest
+
+app = FastAPI()
+
+# 1. Créer une session.
+session = await payafrica.initiate_payment(PaymentRequest(
+    amount=1000,
+    currency="XOF",
+    reference="order-123",
+    customer_phone="+221770000000",
+    success_url="https://merchant.example/payments/success",
+    failure_url="https://merchant.example/payments/failed",
+))
+
+# 2. Vérifier le statut.
+status = await payafrica.check_status(session.id)
+
+# 3. Utilisez toujours le body brut pour les webhooks signés.
+@app.post("/webhooks/payments")
+async def webhook(request: Request) -> dict[str, str]:
+    raw_body = await request.body()
+    event = await payafrica.handle_webhook(raw_body, dict(request.headers))
+    return {"event_id": event.id}
+
+# 4. Rembourser. Orange Money lève NotImplementedError.
+refund = await payafrica.refund(session.id, 500)
+```
+
+Fermez le client HTTPX au cycle de vie de votre application avec `await client.aclose()`.
+
+## Erreurs normalisées
+
+| PaymentError | Orange Money | Wave | MTN MoMo |
+| --- | --- | --- | --- |
+| `INSUFFICIENT_FUNDS` | `2020`, `2021` | `insufficient-funds` | `NOT_ENOUGH_FUNDS` |
+| `PROVIDER_TIMEOUT` | Erreur technique | HTTP 5xx ou timeout | HTTP 5xx ou timeout |
+| `INVALID_PHONE` | `2000`, `2001` | Erreur de mobile | Validation MSISDN/provider |
+| `USER_CANCELLED` | Annulation client | Paiement annulé | `APPROVAL_REJECTED`, `EXPIRED` |
+| `UNKNOWN` | Autre erreur | Autre erreur | Autre erreur |
+
+Les adaptateurs lèvent `ProviderError`; inspectez `error.code` et effectuez un `check_status` après un timeout avant toute action métier.
+
+## Tests
+
+```bash
+poetry run pytest
+poetry run mypy payafrica
+```
+
+Les tests utilisent `pytest-asyncio` et `respx` pour rejouer les échanges HTTP des providers.

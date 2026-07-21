@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  publish-npm:
+    name: Publish npm packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      - run: npm ci
+      - run: npm --workspace @payafrica/core-node run build
+      - run: npm --workspace @payafrica/cli run build
+      - name: Publish core Node package
+        working-directory: packages/core-node
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish CLI package
+        working-directory: packages/cli
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-pypi:
+    name: Publish Python package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pipx install poetry
+      - name: Build Python distribution
+        working-directory: packages/core-python
+        run: poetry build
+      - name: Publish to PyPI
+        working-directory: packages/core-python
+        run: poetry publish --username __token__ --password "$PYPI_TOKEN"
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+
+  prepare-packagist:
+    name: Prepare Packagist release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      - name: Validate Composer package
+        working-directory: packages/core-php
+        run: composer validate --strict
+      - name: Report tag for Packagist auto-update
+        run: echo "Packagist can synchronize package metadata from tag $GITHUB_REF_NAME."
