@@ -1,6 +1,7 @@
 {
   "name": "payafrica/core-php",
   "description": "Unified mobile-money payment SDK core for PHP.",
+  "license": "MIT",
   "type": "library",
   "require": {
     "php": ">=8.1",
