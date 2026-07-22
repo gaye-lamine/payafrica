@@ -1,6 +1,6 @@
 {
   "name": "@payafrica/cli",
-  "version": "1.0.3",
+  "version": "1.2.0",
   "description": "Interactive PayAfrica integration generator.",
   "type": "module",
   "bin": {

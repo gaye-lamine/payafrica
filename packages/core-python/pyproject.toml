@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "payafrica-sdk"
-version = "1.0.3"
+version = "1.2.0"
 description = "Unified West African mobile-money payment SDK."
 authors = ["PayAfrica Contributors"]
 packages = [{ include = "payafrica" }]
