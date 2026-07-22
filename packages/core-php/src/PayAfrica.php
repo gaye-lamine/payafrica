@@ -8,8 +8,8 @@ use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
 use PayAfrica\Sdk\DTO\PaymentEvent;
 use PayAfrica\Sdk\DTO\PaymentRequest;
 use PayAfrica\Sdk\DTO\PaymentSession;
+use PayAfrica\Sdk\DTO\PaymentStatusResult;
 use PayAfrica\Sdk\DTO\RefundResult;
-use PayAfrica\Sdk\Enums\PaymentStatus;
 
 final class PayAfrica
 {
@@ -22,7 +22,7 @@ final class PayAfrica
         return $this->provider->initiatePayment($params);
     }
 
-    public function checkStatus(string $sessionId): PaymentStatus
+    public function checkStatus(string $sessionId): PaymentStatusResult
     {
         return $this->provider->checkStatus($sessionId);
     }
@@ -33,7 +33,7 @@ final class PayAfrica
         return $this->provider->handleWebhook($rawBody, $headers);
     }
 
-    public function refund(string $sessionId, ?int $amount = null): RefundResult
+    public function refund(string $sessionId, int|float|null $amount = null): RefundResult
     {
         return $this->provider->refund($sessionId, $amount);
     }

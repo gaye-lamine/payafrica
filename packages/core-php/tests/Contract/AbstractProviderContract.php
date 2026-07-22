@@ -5,18 +5,24 @@ declare(strict_types=1);
 namespace PayAfrica\Sdk\Tests\Contract;
 
 use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
+use PayAfrica\Sdk\Contracts\WebhookEventStoreInterface;
 use PayAfrica\Sdk\DTO\PaymentRequest;
+use PayAfrica\Sdk\Enums\PaymentError;
 use PayAfrica\Sdk\Enums\PaymentStatus;
+use PayAfrica\Sdk\Exceptions\ProviderException;
 use PHPUnit\Framework\TestCase;
 
 abstract class AbstractProviderContract extends TestCase
 {
-    abstract protected function createProvider(): PaymentProviderInterface;
+    abstract protected function createProvider(?WebhookEventStoreInterface $webhookEventStore = null): PaymentProviderInterface;
+
+    /** @return array{request: PaymentRequest, failedSessionId: string, failedPaymentError: PaymentError, timeoutSessionId: string, validWebhook: array{rawBody: string, headers: array<string, string>, id: string, sessionId: string, status: PaymentStatus}, invalidWebhook: array{rawBody: string, headers: array<string, string>}, refund: array{sessionId: string, originalAmount: int, unusualOriginalSessionId: string, unusualOriginalAmount: int, partialAmount: int, fullAmount: int, supported: bool, status: PaymentStatus}, expiration: array{sessionId: string, supported: bool, webhook?: array{rawBody: string, headers: array<string, string>, id: string, sessionId: string, status: PaymentStatus, occurredAt: string}}} */
+    abstract protected function contractFixture(): array;
 
     public function testInitiatePaymentAndCheckStatusSuccess(): void
     {
         $provider = $this->createProvider();
-        $request = new PaymentRequest(1000, 'XOF', 'contract-success');
+        $request = $this->contractFixture()['request'];
 
         $session = $provider->initiatePayment($request);
 
@@ -24,52 +30,162 @@ abstract class AbstractProviderContract extends TestCase
         self::assertSame($request->reference, $session->reference);
         self::assertSame($request->amount, $session->amount);
         self::assertSame($request->currency, $session->currency);
-        self::assertSame(PaymentStatus::Success, $provider->checkStatus($session->id));
+        self::assertSame(PaymentStatus::Success, $provider->checkStatus($session->id)->status);
     }
 
     public function testPaymentFailedMappedToPaymentError(): void
     {
-        self::assertSame(PaymentStatus::Failed, $this->createProvider()->checkStatus('contract-failed'));
+        $fixture = $this->contractFixture();
+        $result = $this->createProvider()->checkStatus($fixture['failedSessionId']);
+
+        self::assertSame(PaymentStatus::Failed, $result->status);
+        self::assertSame($fixture['failedPaymentError'], $result->error);
     }
 
     public function testValidWebhookReturnsPaymentEvent(): void
     {
-        $event = $this->createProvider()->handleWebhook(
-            '{"id":"contract-event","sessionId":"contract-success","status":"success"}',
-            ['x-contract-webhook-key' => 'valid']
-        );
+        $fixture = $this->contractFixture()['validWebhook'];
+        $event = $this->createProvider()->handleWebhook($fixture['rawBody'], $fixture['headers']);
 
-        self::assertNotSame('', $event->id);
-        self::assertNotSame('', $event->sessionId);
-        self::assertSame(PaymentStatus::Success, $event->status);
+        self::assertSame($fixture['id'], $event->id);
+        self::assertSame($fixture['sessionId'], $event->sessionId);
+        self::assertSame($fixture['status'], $event->status);
         self::assertNotSame('', $event->occurredAt);
     }
 
     public function testInvalidWebhookSignatureThrowsException(): void
     {
+        $fixture = $this->contractFixture()['invalidWebhook'];
         $this->expectException(\Throwable::class);
-        $this->createProvider()->handleWebhook('{"status":"success"}', ['x-contract-webhook-key' => 'invalid']);
+        $this->createProvider()->handleWebhook($fixture['rawBody'], $fixture['headers']);
     }
 
     public function testPartialRefund(): void
     {
-        $refund = $this->createProvider()->refund('contract-success', 500);
+        $fixture = $this->contractFixture()['refund'];
+        if (!$fixture['supported']) {
+            $this->expectException(\Throwable::class);
+            $this->createProvider()->refund($fixture['sessionId'], $fixture['partialAmount']);
+            return;
+        }
+        $refund = $this->createProvider()->refund($fixture['sessionId'], $fixture['partialAmount']);
 
-        self::assertSame('contract-success', $refund->sessionId);
-        self::assertSame(500, $refund->amount);
+        self::assertSame($fixture['sessionId'], $refund->sessionId);
+        self::assertSame($fixture['partialAmount'], $refund->amount);
+        self::assertSame($fixture['status'], $refund->status);
     }
 
     public function testFullRefund(): void
     {
-        $refund = $this->createProvider()->refund('contract-success');
+        $fixture = $this->contractFixture()['refund'];
+        if (!$fixture['supported']) {
+            $this->expectException(\Throwable::class);
+            $this->createProvider()->refund($fixture['sessionId']);
+            return;
+        }
+        $refund = $this->createProvider()->refund($fixture['sessionId']);
 
-        self::assertSame('contract-success', $refund->sessionId);
-        self::assertGreaterThan(0, $refund->amount);
+        self::assertSame($fixture['sessionId'], $refund->sessionId);
+        self::assertSame($fixture['fullAmount'], $refund->amount);
+        self::assertSame($fixture['status'], $refund->status);
+    }
+
+    public function testZeroRefundAmountIsRejected(): void
+    {
+        $this->assertInvalidRefundAmount(0);
+    }
+
+    public function testNegativeRefundAmountIsRejected(): void
+    {
+        $this->assertInvalidRefundAmount(-1);
+    }
+
+    public function testDecimalRefundAmountIsRejected(): void
+    {
+        $this->assertInvalidRefundAmount(1.5);
+    }
+
+    public function testRefundAmountExceedingOriginalIsRejected(): void
+    {
+        $fixture = $this->contractFixture()['refund'];
+        if (!$fixture['supported']) {
+            $this->markTestSkipped('Provider does not support refunds.');
+        }
+
+        try {
+            $this->createProvider()->refund($fixture['sessionId'], $fixture['originalAmount'] + 1);
+            self::fail('Expected a refund amount exceeding the original amount to be rejected.');
+        } catch (ProviderException $exception) {
+            self::assertSame(PaymentError::RefundAmountExceedsBalance, $exception->paymentError);
+        }
+    }
+
+    public function testTotalRefundIsExemptFromAmountLimit(): void
+    {
+        $fixture = $this->contractFixture()['refund'];
+        if (!$fixture['supported']) {
+            $this->markTestSkipped('Provider does not support refunds.');
+        }
+
+        $refund = $this->createProvider()->refund($fixture['unusualOriginalSessionId']);
+
+        self::assertSame($fixture['unusualOriginalSessionId'], $refund->sessionId);
+        self::assertSame($fixture['unusualOriginalAmount'], $refund->amount);
+        self::assertSame($fixture['status'], $refund->status);
+    }
+
+    public function testExpiredSession(): void
+    {
+        $fixture = $this->contractFixture()['expiration'];
+        if (!$fixture['supported']) {
+            $this->markTestSkipped('Provider does not support expired sessions.');
+        }
+
+        self::assertSame(PaymentStatus::Expired, $this->createProvider()->checkStatus($fixture['sessionId'])->status);
+
+        if (!isset($fixture['webhook'])) {
+            return;
+        }
+
+        $webhook = $fixture['webhook'];
+        $event = $this->createProvider()->handleWebhook($webhook['rawBody'], $webhook['headers']);
+        self::assertSame($webhook['id'], $event->id);
+        self::assertSame($webhook['sessionId'], $event->sessionId);
+        self::assertSame(PaymentStatus::Expired, $event->status);
+        self::assertSame($webhook['occurredAt'], $event->occurredAt);
     }
 
     public function testProviderTimeoutMappedCorrectly(): void
     {
         $this->expectException(\Throwable::class);
-        $this->createProvider()->checkStatus('contract-timeout');
+        $this->createProvider()->checkStatus($this->contractFixture()['timeoutSessionId']);
+    }
+
+    public function testWebhookDeliveredTwice(): void
+    {
+        $fixture = $this->contractFixture()['validWebhook'];
+        $store = new SpyWebhookEventStore();
+        $provider = $this->createProvider($store);
+        $first = $provider->handleWebhook($fixture['rawBody'], $fixture['headers']);
+        $second = $provider->handleWebhook($fixture['rawBody'], $fixture['headers']);
+
+        self::assertEquals($first, $second);
+        self::assertSame($first->id, $second->id);
+        self::assertSame(1, $store->businessProcessCalls);
+    }
+
+    private function assertInvalidRefundAmount(int|float $amount): void
+    {
+        $fixture = $this->contractFixture()['refund'];
+        if (!$fixture['supported']) {
+            $this->markTestSkipped('Provider does not support refunds.');
+        }
+
+        try {
+            $this->createProvider()->refund($fixture['sessionId'], $amount);
+            self::fail('Expected an invalid refund amount to be rejected.');
+        } catch (ProviderException $exception) {
+            self::assertSame(PaymentError::InvalidRefundAmount, $exception->paymentError);
+        }
     }
 }

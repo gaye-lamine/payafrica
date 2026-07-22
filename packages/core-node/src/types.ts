@@ -1,6 +1,6 @@
 export interface PaymentProvider {
   initiatePayment(params: PaymentRequest): Promise<PaymentSession>;
-  checkStatus(sessionId: string): Promise<PaymentStatus>;
+  checkStatus(sessionId: string): Promise<PaymentStatusResult>;
   handleWebhook(
     rawBody: string | Buffer,
     headers: Record<string, string | string[] | undefined>
@@ -35,6 +35,16 @@ export enum PaymentStatus {
   Expired = "expired",
 }
 
+export type PaymentStatusResult =
+  | {
+      status: PaymentStatus.Pending | PaymentStatus.Success | PaymentStatus.Expired;
+      error?: never;
+    }
+  | {
+      status: PaymentStatus.Failed;
+      error: PaymentError;
+    };
+
 export interface PaymentEvent {
   id: string;
   sessionId: string;
@@ -55,6 +65,8 @@ export enum PaymentError {
   InsufficientFunds = "INSUFFICIENT_FUNDS",
   ProviderTimeout = "PROVIDER_TIMEOUT",
   InvalidPhone = "INVALID_PHONE",
+  InvalidRefundAmount = "INVALID_REFUND_AMOUNT",
+  RefundAmountExceedsBalance = "REFUND_AMOUNT_EXCEEDS_BALANCE",
   UserCancelled = "USER_CANCELLED",
   Unknown = "UNKNOWN",
 }

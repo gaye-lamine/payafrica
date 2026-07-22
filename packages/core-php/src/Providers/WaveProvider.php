@@ -6,23 +6,45 @@ namespace PayAfrica\Sdk\Providers;
 
 use GuzzleHttp\Psr7\HttpFactory;
 use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
+use PayAfrica\Sdk\Contracts\WebhookEventStoreInterface;
 use PayAfrica\Sdk\DTO\PaymentEvent;
 use PayAfrica\Sdk\DTO\PaymentRequest;
 use PayAfrica\Sdk\DTO\PaymentSession;
+use PayAfrica\Sdk\DTO\PaymentStatusResult;
 use PayAfrica\Sdk\DTO\RefundResult;
 use PayAfrica\Sdk\Enums\PaymentError;
 use PayAfrica\Sdk\Enums\PaymentStatus;
 use PayAfrica\Sdk\Exceptions\ProviderException;
+use PayAfrica\Sdk\Support\InMemoryWebhookEventStore;
+use PayAfrica\Sdk\Support\RefundAmountValidator;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseInterface;
 
+/**
+ * @phpstan-type WaveCheckoutSession array{
+ *   id?: string,
+ *   amount?: int|string,
+ *   client_reference?: string|null,
+ *   wave_launch_url?: string,
+ *   checkout_status?: 'open'|'complete'|'expired',
+ *   payment_status?: string,
+ *   error_code?: string,
+ *   when_expires?: string,
+ *   when_completed?: string,
+ *   when_created?: string
+ * }
+ */
 final class WaveProvider implements PaymentProviderInterface
 {
     private const BASE_URL = 'https://api.wave.com/v1';
+    private readonly WebhookEventStoreInterface $webhookEventStore;
 
-    public function __construct(private readonly ClientInterface $httpClient, private readonly string $apiKey, private readonly string $webhookSecret)
+    public function __construct(private readonly ClientInterface $httpClient, private readonly string $apiKey, private readonly string $webhookSecret, ?WebhookEventStoreInterface $webhookEventStore = null)
     {
+        // A process-global default would share mutable state across unrelated workers.
+        // Inject a durable shared store when deduplication must survive requests.
+        $this->webhookEventStore = $webhookEventStore ?? new InMemoryWebhookEventStore();
     }
 
     public function initiatePayment(PaymentRequest $params): PaymentSession
@@ -41,10 +63,21 @@ final class WaveProvider implements PaymentProviderInterface
         return new PaymentSession($id, $params->reference, $params->amount, $params->currency, PaymentStatus::Pending, isset($payload['wave_launch_url']) ? (string) $payload['wave_launch_url'] : null);
     }
 
-    public function checkStatus(string $sessionId): PaymentStatus
+    public function checkStatus(string $sessionId): PaymentStatusResult
     {
-        $payload = $this->json($this->request('GET', '/checkout/sessions/' . rawurlencode($sessionId)));
-        return $this->status((string) ($payload['payment_status'] ?? ''));
+        $payload = $this->checkoutSession($sessionId);
+        // checkout_status takes priority because payment_status has no documented expired value.
+        if (($payload['checkout_status'] ?? null) === 'expired') {
+            return new PaymentStatusResult(PaymentStatus::Expired);
+        }
+        $status = $this->status((string) ($payload['payment_status'] ?? ''));
+
+        return new PaymentStatusResult(
+            $status,
+            $status === PaymentStatus::Failed
+                ? $this->errorFor(200, (string) ($payload['error_code'] ?? ''))
+                : null,
+        );
     }
 
     public function handleWebhook(string $rawBody, array $headers): PaymentEvent
@@ -60,13 +93,41 @@ final class WaveProvider implements PaymentProviderInterface
             throw new ProviderException(PaymentError::Unknown, 'Incomplete Wave webhook payload');
         }
         $eventType = (string) ($payload['type'] ?? '');
-        $status = $eventType === 'checkout.session.completed' ? PaymentStatus::Success : ($eventType === 'checkout.session.payment_failed' ? PaymentStatus::Failed : $this->status((string) ($data['payment_status'] ?? '')));
-        return new PaymentEvent((string) ($payload['id'] ?? $sessionId), $sessionId, $status, (string) ($data['when_completed'] ?? $data['when_created'] ?? gmdate(DATE_ATOM)), isset($data['client_reference']) ? (string) $data['client_reference'] : null);
+        // Wave currently documents no dedicated webhook event type for expiration.
+        // An expired checkout_status is therefore accepted before event-type mapping.
+        $status = ($data['checkout_status'] ?? null) === 'expired'
+            ? PaymentStatus::Expired
+            : ($eventType === 'checkout.session.completed'
+                ? PaymentStatus::Success
+                : ($eventType === 'checkout.session.payment_failed'
+                    ? PaymentStatus::Failed
+                    : $this->status((string) ($data['payment_status'] ?? ''))));
+        $event = new PaymentEvent((string) ($payload['id'] ?? $sessionId), $sessionId, $status, (string) ($data['when_completed'] ?? $data['when_expires'] ?? $data['when_created'] ?? gmdate(DATE_ATOM)), isset($data['client_reference']) ? (string) $data['client_reference'] : null);
+
+        return $this->webhookEventStore->process($event, fn (PaymentEvent $event): PaymentEvent => $this->processWebhookEvent($event));
     }
 
-    public function refund(string $sessionId, ?int $amount = null): RefundResult
+    public function refund(string $sessionId, int|float|null $amount = null): RefundResult
     {
-        $payload = $this->json($this->request('POST', '/checkout/sessions/' . rawurlencode($sessionId) . '/refund', $amount === null ? null : ['amount' => $amount]));
+        if ($amount !== null) {
+            $amount = RefundAmountValidator::validate(
+                $amount,
+                fn (PaymentError $code, string $message): ProviderException => new ProviderException($code, $message),
+            );
+        }
+
+        $session = $this->checkoutSession($sessionId);
+        $originalAmount = $this->originalAmount($session['amount'] ?? null);
+
+        if ($amount !== null && $amount > $originalAmount) {
+            throw new ProviderException(
+                PaymentError::RefundAmountExceedsBalance,
+                'Refund amount exceeds the original payment amount',
+            );
+        }
+
+        $refundAmount = $amount ?? $originalAmount;
+        $payload = $this->json($this->request('POST', '/checkout/sessions/' . rawurlencode($sessionId) . '/refund', $amount === null ? null : ['amount' => $refundAmount]));
         $refundId = $payload['id'] ?? null;
         $refundAmount = $payload['amount'] ?? null;
         if (!is_string($refundId) || !is_int($refundAmount)) {
@@ -92,10 +153,37 @@ final class WaveProvider implements PaymentProviderInterface
         if ($response->getStatusCode() >= 400) {
             $payload = $this->json($response);
             $code = (string) ($payload['error_code'] ?? '');
-            $error = $code === 'insufficient-funds' ? PaymentError::InsufficientFunds : ($code === 'payer-mobile-mismatch' ? PaymentError::InvalidPhone : ($response->getStatusCode() >= 500 || $response->getStatusCode() === 408 ? PaymentError::ProviderTimeout : PaymentError::Unknown));
+            $error = $this->errorFor($response->getStatusCode(), $code);
             throw new ProviderException($error, (string) ($payload['error_message'] ?? 'Wave request failed'));
         }
         return $response;
+    }
+
+    /** @return WaveCheckoutSession */
+    private function checkoutSession(string $sessionId): array
+    {
+        return $this->json($this->request('GET', '/checkout/sessions/' . rawurlencode($sessionId)));
+    }
+
+    private function originalAmount(mixed $amount): int
+    {
+        if (is_int($amount) && $amount > 0) {
+            return $amount;
+        }
+
+        if (is_string($amount) && ctype_digit($amount)) {
+            $parsed = (int) $amount;
+            if ($parsed > 0 && (string) $parsed === $amount) {
+                return $parsed;
+            }
+        }
+
+        throw new ProviderException(PaymentError::Unknown, 'Wave checkout response is missing a valid amount');
+    }
+
+    private function processWebhookEvent(PaymentEvent $event): PaymentEvent
+    {
+        return $event;
     }
 
     private function validSignature(string $rawBody, string $signature): bool
@@ -118,6 +206,24 @@ final class WaveProvider implements PaymentProviderInterface
             'cancelled', 'failed' => PaymentStatus::Failed,
             default => throw new ProviderException(PaymentError::Unknown, 'Unknown Wave payment status'),
         };
+    }
+
+    private function errorFor(int $httpStatus, string $code): PaymentError
+    {
+        if ($code === 'insufficient-funds') {
+            return PaymentError::InsufficientFunds;
+        }
+        if ($code === 'payer-mobile-mismatch' || $code === 'invalid-phone') {
+            return PaymentError::InvalidPhone;
+        }
+        if ($code === 'payment-cancelled' || $code === 'user-cancelled') {
+            return PaymentError::UserCancelled;
+        }
+        if ($httpStatus >= 500 || $httpStatus === 408 || $httpStatus === 429) {
+            return PaymentError::ProviderTimeout;
+        }
+
+        return PaymentError::Unknown;
     }
 
     private function json(ResponseInterface $response): array { return $this->decode((string) $response->getBody()); }

@@ -3,7 +3,7 @@ import type {
   PaymentProvider,
   PaymentRequest,
   PaymentSession,
-  PaymentStatus,
+  PaymentStatusResult,
   RefundResult,
 } from "../types.js";
 
@@ -13,7 +13,7 @@ export class TemplateProvider implements PaymentProvider {
     throw new Error("Not implemented");
   }
 
-  public async checkStatus(_sessionId: string): Promise<PaymentStatus> {
+  public async checkStatus(_sessionId: string): Promise<PaymentStatusResult> {
     // TODO: Fetch the provider transaction and normalize its status.
     throw new Error("Not implemented");
   }

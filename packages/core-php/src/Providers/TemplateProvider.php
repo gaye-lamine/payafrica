@@ -9,8 +9,8 @@ use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
 use PayAfrica\Sdk\DTO\PaymentEvent;
 use PayAfrica\Sdk\DTO\PaymentRequest;
 use PayAfrica\Sdk\DTO\PaymentSession;
+use PayAfrica\Sdk\DTO\PaymentStatusResult;
 use PayAfrica\Sdk\DTO\RefundResult;
-use PayAfrica\Sdk\Enums\PaymentStatus;
 
 final class TemplateProvider implements PaymentProviderInterface
 {
@@ -20,7 +20,7 @@ final class TemplateProvider implements PaymentProviderInterface
         throw new LogicException('Not implemented');
     }
 
-    public function checkStatus(string $sessionId): PaymentStatus
+    public function checkStatus(string $sessionId): PaymentStatusResult
     {
         // TODO: Fetch and normalize the provider payment status.
         throw new LogicException('Not implemented');
@@ -32,7 +32,7 @@ final class TemplateProvider implements PaymentProviderInterface
         throw new LogicException('Not implemented');
     }
 
-    public function refund(string $sessionId, ?int $amount = null): RefundResult
+    public function refund(string $sessionId, int|float|null $amount = null): RefundResult
     {
         // TODO: Request a full or partial refund and normalize the result.
         throw new LogicException('Not implemented');

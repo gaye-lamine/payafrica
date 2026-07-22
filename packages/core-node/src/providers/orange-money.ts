@@ -7,8 +7,10 @@ import {
   type PaymentProvider,
   type PaymentRequest,
   type PaymentSession,
+  type PaymentStatusResult,
   type RefundResult,
 } from "../types.js";
+import { InMemoryWebhookEventStore, type WebhookEventStore } from "../webhook-event-store.js";
 
 const BASE_URLS = {
   sandbox: "https://api.sandbox.orange-sonatel.com",
@@ -25,6 +27,7 @@ export interface OrangeMoneyProviderConfig {
   environment: OrangeMoneyEnvironment;
   callbackUrl: string;
   webhookApiKey: string;
+  webhookEventStore?: WebhookEventStore;
 }
 
 interface OrangeApiErrorBody {
@@ -44,6 +47,7 @@ interface OrangePrepareResponse {
 
 interface OrangeTransaction {
   status?: string;
+  code?: string | number;
 }
 
 interface OrangeTransactionSearchResponse {
@@ -69,8 +73,11 @@ export class OrangeMoneyProviderError extends Error {
 export class OrangeMoneyProvider implements PaymentProvider {
   private accessToken?: string;
   private accessTokenExpiresAt = 0;
+  private readonly webhookEventStore: WebhookEventStore;
 
-  public constructor(private readonly config: OrangeMoneyProviderConfig) {}
+  public constructor(private readonly config: OrangeMoneyProviderConfig) {
+    this.webhookEventStore = config.webhookEventStore ?? new InMemoryWebhookEventStore();
+  }
 
   public async initiatePayment(params: PaymentRequest): Promise<PaymentSession> {
     const response = await this.request(
@@ -109,7 +116,7 @@ export class OrangeMoneyProvider implements PaymentProvider {
     };
   }
 
-  public async checkStatus(sessionId: string): Promise<PaymentStatus> {
+  public async checkStatus(sessionId: string): Promise<PaymentStatusResult> {
     const query = new URLSearchParams({ reference: sessionId, type: "WEB_PAYMENT" });
     const response = await this.request(`/api/eWallet/v1/transactions?${query.toString()}`);
     const body = await this.readJson<OrangeTransactionSearchResponse>(response);
@@ -122,7 +129,7 @@ export class OrangeMoneyProvider implements PaymentProvider {
       );
     }
 
-    return this.toPaymentStatus(transaction.status);
+    return this.toPaymentStatusResult(transaction.status, transaction.code);
   }
 
   public async handleWebhook(
@@ -146,13 +153,14 @@ export class OrangeMoneyProvider implements PaymentProvider {
       );
     }
 
-    return {
+    const event: PaymentEvent = {
       id: payload.id ?? payload.transactionId ?? sessionId,
       sessionId,
       status: this.toPaymentStatus(payload.status ?? ""),
       ...(payload.reference === undefined ? {} : { reference: payload.reference }),
       occurredAt: payload.timestamp ?? new Date().toISOString(),
     };
+    return this.webhookEventStore.record(event);
   }
 
   public async refund(_sessionId: string, _amount?: number): Promise<RefundResult> {
@@ -270,6 +278,15 @@ export class OrangeMoneyProvider implements PaymentProvider {
       default:
         throw new OrangeMoneyProviderError(PaymentError.Unknown, "Unknown Orange Money payment status");
     }
+  }
+
+  private toPaymentStatusResult(status: string, errorCode?: string | number): PaymentStatusResult {
+    const paymentStatus = this.toPaymentStatus(status);
+    if (paymentStatus !== PaymentStatus.Failed) {
+      return { status: paymentStatus };
+    }
+
+    return { status: paymentStatus, error: this.mapErrorCode(errorCode ?? "UNKNOWN") };
   }
 
   private findHeader(

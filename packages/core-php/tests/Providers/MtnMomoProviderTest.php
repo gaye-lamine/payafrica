@@ -9,42 +9,39 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
+use PayAfrica\Sdk\Contracts\WebhookEventStoreInterface;
 use PayAfrica\Sdk\DTO\PaymentRequest;
 use PayAfrica\Sdk\Enums\PaymentStatus;
+use PayAfrica\Sdk\Enums\PaymentError;
 use PayAfrica\Sdk\Providers\MtnMomoProvider;
 use PayAfrica\Sdk\Tests\Contract\AbstractProviderContract;
 
 final class MtnMomoProviderTest extends AbstractProviderContract
 {
-    protected function createProvider(): PaymentProviderInterface
+    protected function createProvider(?WebhookEventStoreInterface $webhookEventStore = null): PaymentProviderInterface
     {
         $responses = match ($this->name()) {
-            'testPaymentFailedMappedToPaymentError' => [$this->token(), $this->json(['status' => 'FAILED'])],
-            'testPartialRefund' => [$this->token(), new Response(202)],
-            'testFullRefund' => [$this->token(), $this->json(['amount' => '1000']), new Response(202)],
+            'testPaymentFailedMappedToPaymentError' => [$this->token(), $this->json(['status' => 'FAILED', 'code' => 'NOT_ENOUGH_FUNDS'])],
+            'testPartialRefund' => [$this->token(), $this->json(['amount' => 1000]), new Response(202)],
+            'testFullRefund' => [$this->token(), $this->json(['amount' => 1000]), new Response(202)],
+            'testRefundAmountExceedingOriginalIsRejected' => [$this->token(), $this->json(['amount' => 1000])],
+            'testTotalRefundIsExemptFromAmountLimit' => [$this->token(), $this->json(['amount' => PHP_INT_MAX]), new Response(202)],
             'testProviderTimeoutMappedCorrectly' => [$this->token(), $this->json([], 503)],
             default => [$this->token(), new Response(202), $this->json(['status' => 'SUCCESSFUL'])],
         };
-        return new MtnMomoProvider($this->client($responses), 'mtn-key', '3fa85f64-5717-4562-b3fc-2c963f66afa6', 'api-key');
+        return new MtnMomoProvider($this->client($responses), 'mtn-key', '3fa85f64-5717-4562-b3fc-2c963f66afa6', 'api-key', 'sandbox', 'XOF', $webhookEventStore);
     }
 
-    public function testInitiatePaymentAndCheckStatusSuccess(): void
+    protected function contractFixture(): array
     {
-        $provider = $this->createProvider();
-        $session = $provider->initiatePayment(new PaymentRequest(1000, 'XOF', 'contract-success', '+221770000000'));
-        self::assertSame(PaymentStatus::Success, $provider->checkStatus($session->id));
-    }
-
-    public function testValidWebhookReturnsPaymentEvent(): void
-    {
-        $event = $this->createProvider()->handleWebhook('{"referenceId":"mtn-1","externalId":"contract-success","status":"SUCCESSFUL"}', ['ocp-apim-subscription-key' => 'mtn-key']);
-        self::assertSame('mtn-1', $event->sessionId);
-    }
-
-    public function testInvalidWebhookSignatureThrowsException(): void
-    {
-        $this->expectException(\Throwable::class);
-        $this->createProvider()->handleWebhook('{}', ['ocp-apim-subscription-key' => 'invalid']);
+        return [
+            'request' => new PaymentRequest(1000, 'XOF', 'contract-success', '+221770000000'),
+            'failedSessionId' => 'contract-failed', 'failedPaymentError' => PaymentError::InsufficientFunds, 'timeoutSessionId' => 'contract-timeout',
+            'validWebhook' => ['rawBody' => '{"referenceId":"mtn-1","externalId":"contract-success","status":"SUCCESSFUL"}', 'headers' => ['ocp-apim-subscription-key' => 'mtn-key'], 'id' => 'mtn-1', 'sessionId' => 'mtn-1', 'status' => PaymentStatus::Success],
+            'invalidWebhook' => ['rawBody' => '{}', 'headers' => ['ocp-apim-subscription-key' => 'invalid']],
+            'refund' => ['sessionId' => 'contract-success', 'originalAmount' => 1000, 'unusualOriginalSessionId' => 'mtn-unusual', 'unusualOriginalAmount' => PHP_INT_MAX, 'partialAmount' => 500, 'fullAmount' => 1000, 'supported' => true, 'status' => PaymentStatus::Pending],
+            'expiration' => ['sessionId' => 'mtn-expired-unsupported', 'supported' => false],
+        ];
     }
 
     /** @param list<Response> $responses */

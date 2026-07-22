@@ -7,14 +7,18 @@ import {
   type PaymentProvider,
   type PaymentRequest,
   type PaymentSession,
+  type PaymentStatusResult,
   type RefundResult,
 } from "../types.js";
+import { validateRefundAmount } from "../refund-validation.js";
+import { InMemoryWebhookEventStore, type WebhookEventStore } from "../webhook-event-store.js";
 
 const WAVE_API_BASE_URL = "https://api.wave.com/v1";
 
 export interface WaveProviderConfig {
   apiKey: string;
   webhookSecret: string;
+  webhookEventStore?: WebhookEventStore;
 }
 
 interface WaveCheckoutSession {
@@ -23,7 +27,16 @@ interface WaveCheckoutSession {
   currency?: string;
   client_reference?: string | null;
   wave_launch_url?: string;
+  /**
+   * Wave checkout lifecycle. It takes priority over payment_status for expiry
+   * detection because payment_status has no documented "expired" value.
+   */
+  checkout_status?: "open" | "complete" | "expired";
   payment_status?: string;
+  error_code?: string;
+  when_expires?: string;
+  when_completed?: string;
+  when_created?: string;
 }
 
 interface WaveRefundResponse {
@@ -41,7 +54,7 @@ interface WaveErrorResponse {
 interface WaveWebhookPayload {
   id?: string;
   type?: string;
-  data?: WaveCheckoutSession & { when_completed?: string; when_created?: string };
+  data?: WaveCheckoutSession;
 }
 
 /** Error intentionally reduced to the common PaymentError code. */
@@ -53,7 +66,11 @@ export class WaveProviderError extends Error {
 }
 
 export class WaveProvider implements PaymentProvider {
-  public constructor(private readonly config: WaveProviderConfig) {}
+  private readonly webhookEventStore: WebhookEventStore;
+
+  public constructor(private readonly config: WaveProviderConfig) {
+    this.webhookEventStore = config.webhookEventStore ?? new InMemoryWebhookEventStore();
+  }
 
   public async initiatePayment(params: PaymentRequest): Promise<PaymentSession> {
     const response = await this.request("/checkout/sessions", {
@@ -82,14 +99,17 @@ export class WaveProvider implements PaymentProvider {
     };
   }
 
-  public async checkStatus(sessionId: string): Promise<PaymentStatus> {
-    const response = await this.request(`/checkout/sessions/${encodeURIComponent(sessionId)}`);
-    const session = await this.readJson<WaveCheckoutSession>(response);
+  public async checkStatus(sessionId: string): Promise<PaymentStatusResult> {
+    const session = await this.getCheckoutSession(sessionId);
 
+    // checkout_status is evaluated first: only it can explicitly represent expiry.
+    if (session.checkout_status === "expired") {
+      return { status: PaymentStatus.Expired };
+    }
     if (typeof session.payment_status !== "string") {
       throw new WaveProviderError(PaymentError.Unknown, "Wave checkout response is missing payment_status");
     }
-    return this.toPaymentStatus(session.payment_status);
+    return this.toPaymentStatusResult(session.payment_status, session.error_code);
   }
 
   public async handleWebhook(
@@ -110,18 +130,38 @@ export class WaveProvider implements PaymentProvider {
       throw new WaveProviderError(PaymentError.Unknown, "Wave webhook is missing checkout session id");
     }
 
-    return {
+    const event: PaymentEvent = {
       id: payload.id ?? sessionId,
       sessionId,
-      status: this.toWebhookStatus(payload.type, data?.payment_status),
+      status: this.toWebhookStatus(payload.type, data?.checkout_status, data?.payment_status),
       ...(data?.client_reference === null || data?.client_reference === undefined
         ? {}
         : { reference: data.client_reference }),
-      occurredAt: data?.when_completed ?? data?.when_created ?? new Date().toISOString(),
+      occurredAt: data?.when_completed ?? data?.when_expires ?? data?.when_created ?? new Date().toISOString(),
     };
+    return this.webhookEventStore.record(event);
   }
 
   public async refund(sessionId: string, amount?: number): Promise<RefundResult> {
+    if (amount !== undefined) {
+      validateRefundAmount(
+        amount,
+        (code, message) => new WaveProviderError(code, message)
+      );
+    }
+
+    const session = await this.getCheckoutSession(sessionId);
+    const originalAmount = this.parseOriginalAmount(session.amount);
+
+    if (amount !== undefined && amount > originalAmount) {
+      throw new WaveProviderError(
+        PaymentError.RefundAmountExceedsBalance,
+        "Refund amount exceeds the original payment amount"
+      );
+    }
+
+    const refundAmount = amount ?? originalAmount;
+
     const response = await this.request(`/checkout/sessions/${encodeURIComponent(sessionId)}/refund`, {
       method: "POST",
       ...(amount === undefined ? {} : { body: JSON.stringify({ amount }) }),
@@ -159,6 +199,19 @@ export class WaveProvider implements PaymentProvider {
       throw await this.toResponseError(response);
     }
     return response;
+  }
+
+  private async getCheckoutSession(sessionId: string): Promise<WaveCheckoutSession> {
+    const response = await this.request(`/checkout/sessions/${encodeURIComponent(sessionId)}`);
+    return this.readJson<WaveCheckoutSession>(response);
+  }
+
+  private parseOriginalAmount(amount: string | number | undefined): number {
+    const parsed = typeof amount === "number" ? amount : Number(amount);
+    if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+      throw new WaveProviderError(PaymentError.Unknown, "Wave checkout response is missing a valid amount");
+    }
+    return parsed;
   }
 
   private async toResponseError(response: Response): Promise<WaveProviderError> {
@@ -209,7 +262,25 @@ export class WaveProvider implements PaymentProvider {
     }
   }
 
-  private toWebhookStatus(type: string | undefined, paymentStatus: string | undefined): PaymentStatus {
+  private toPaymentStatusResult(status: string, errorCode?: string): PaymentStatusResult {
+    const paymentStatus = this.toPaymentStatus(status);
+    if (paymentStatus !== PaymentStatus.Failed) {
+      return { status: paymentStatus };
+    }
+
+    return { status: paymentStatus, error: this.mapError(200, errorCode) };
+  }
+
+  private toWebhookStatus(
+    type: string | undefined,
+    checkoutStatus: WaveCheckoutSession["checkout_status"],
+    paymentStatus: string | undefined
+  ): PaymentStatus {
+    // Wave currently documents no dedicated webhook event type for expiration.
+    // Accept an expired checkout_status even when the event type is otherwise unknown.
+    if (checkoutStatus === "expired") {
+      return PaymentStatus.Expired;
+    }
     if (type === "checkout.session.completed") {
       return PaymentStatus.Success;
     }

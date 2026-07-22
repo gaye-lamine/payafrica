@@ -6,13 +6,17 @@ namespace PayAfrica\Sdk\Providers;
 
 use GuzzleHttp\Psr7\HttpFactory;
 use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
+use PayAfrica\Sdk\Contracts\WebhookEventStoreInterface;
 use PayAfrica\Sdk\DTO\PaymentEvent;
 use PayAfrica\Sdk\DTO\PaymentRequest;
 use PayAfrica\Sdk\DTO\PaymentSession;
+use PayAfrica\Sdk\DTO\PaymentStatusResult;
 use PayAfrica\Sdk\DTO\RefundResult;
 use PayAfrica\Sdk\Enums\PaymentError;
 use PayAfrica\Sdk\Enums\PaymentStatus;
 use PayAfrica\Sdk\Exceptions\ProviderException;
+use PayAfrica\Sdk\Support\InMemoryWebhookEventStore;
+use PayAfrica\Sdk\Support\RefundAmountValidator;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -24,6 +28,7 @@ final class MtnMomoProvider implements PaymentProviderInterface
 
     private ?string $accessToken = null;
     private int $accessTokenExpiresAt = 0;
+    private readonly WebhookEventStoreInterface $webhookEventStore;
 
     public function __construct(
         private readonly ClientInterface $httpClient,
@@ -32,7 +37,11 @@ final class MtnMomoProvider implements PaymentProviderInterface
         private readonly string $apiKey,
         private readonly string $targetEnvironment = 'sandbox',
         private readonly string $defaultCurrency = 'XOF',
+        ?WebhookEventStoreInterface $webhookEventStore = null,
     ) {
+        // A PHP worker-local store is safe for development only; production must
+        // inject a durable store shared by webhook handling workers.
+        $this->webhookEventStore = $webhookEventStore ?? new InMemoryWebhookEventStore();
     }
 
     public function initiatePayment(PaymentRequest $params): PaymentSession
@@ -52,10 +61,17 @@ final class MtnMomoProvider implements PaymentProviderInterface
         return new PaymentSession($sessionId, $params->reference, $params->amount, $params->currency ?: $this->defaultCurrency, PaymentStatus::Pending);
     }
 
-    public function checkStatus(string $sessionId): PaymentStatus
+    public function checkStatus(string $sessionId): PaymentStatusResult
     {
         $payload = $this->transaction($sessionId);
-        return $this->status((string) ($payload['status'] ?? ''));
+        $status = $this->status((string) ($payload['status'] ?? ''));
+
+        return new PaymentStatusResult(
+            $status,
+            $status === PaymentStatus::Failed
+                ? $this->errorFor(200, (string) ($payload['code'] ?? ''))
+                : null,
+        );
     }
 
     public function handleWebhook(string $rawBody, array $headers): PaymentEvent
@@ -70,15 +86,31 @@ final class MtnMomoProvider implements PaymentProviderInterface
         if (!is_string($sessionId) || !is_string($status)) {
             throw new ProviderException(PaymentError::Unknown, 'Incomplete MTN MoMo webhook payload');
         }
-        return new PaymentEvent((string) ($payload['id'] ?? $sessionId), $sessionId, $this->status($status), (string) ($payload['timestamp'] ?? gmdate(DATE_ATOM)), isset($payload['externalId']) ? (string) $payload['externalId'] : null);
+        $event = new PaymentEvent((string) ($payload['id'] ?? $sessionId), $sessionId, $this->status($status), (string) ($payload['timestamp'] ?? gmdate(DATE_ATOM)), isset($payload['externalId']) ? (string) $payload['externalId'] : null);
+
+        return $this->webhookEventStore->process($event, fn (PaymentEvent $event): PaymentEvent => $this->processWebhookEvent($event));
     }
 
-    public function refund(string $sessionId, ?int $amount = null): RefundResult
+    public function refund(string $sessionId, int|float|null $amount = null): RefundResult
     {
-        $refundAmount = $amount ?? (int) ($this->transaction($sessionId)['amount'] ?? 0);
-        if ($refundAmount <= 0) {
-            throw new ProviderException(PaymentError::Unknown, 'MTN MoMo response is missing original amount');
+        if ($amount !== null) {
+            $amount = RefundAmountValidator::validate(
+                $amount,
+                fn (PaymentError $code, string $message): ProviderException => new ProviderException($code, $message),
+            );
         }
+
+        $transaction = $this->transaction($sessionId);
+        $originalAmount = $this->originalAmount($transaction['amount'] ?? null);
+
+        if ($amount !== null && $amount > $originalAmount) {
+            throw new ProviderException(
+                PaymentError::RefundAmountExceedsBalance,
+                'Refund amount exceeds the original payment amount',
+            );
+        }
+
+        $refundAmount = $amount ?? $originalAmount;
         $refundId = $this->uuid();
         $this->request('POST', '/collection/v1_0/refund', [
             'amount' => (string) $refundAmount,
@@ -93,6 +125,27 @@ final class MtnMomoProvider implements PaymentProviderInterface
     private function transaction(string $sessionId): array
     {
         return $this->json($this->request('GET', '/collection/v1_0/requesttopay/' . rawurlencode($sessionId)));
+    }
+
+    private function originalAmount(mixed $amount): int
+    {
+        if (is_int($amount) && $amount > 0) {
+            return $amount;
+        }
+
+        if (is_string($amount) && ctype_digit($amount)) {
+            $parsed = (int) $amount;
+            if ($parsed > 0 && (string) $parsed === $amount) {
+                return $parsed;
+            }
+        }
+
+        throw new ProviderException(PaymentError::Unknown, 'MTN MoMo response is missing original amount');
+    }
+
+    private function processWebhookEvent(PaymentEvent $event): PaymentEvent
+    {
+        return $event;
     }
 
     private function request(string $method, string $path, ?array $body = null, ?string $referenceId = null): ResponseInterface
@@ -129,13 +182,27 @@ final class MtnMomoProvider implements PaymentProviderInterface
         if ($response->getStatusCode() >= 400) {
             $payload = $this->json($response);
             $code = (string) ($payload['code'] ?? '');
-            $error = in_array($code, ['RESOURCE_NOT_FOUND', 'PAYER_NOT_FOUND', 'NOT_ENOUGH_FUNDS'], true) ? PaymentError::InsufficientFunds : (in_array($code, ['APPROVAL_REJECTED', 'EXPIRED'], true) ? PaymentError::UserCancelled : ($response->getStatusCode() >= 500 || $response->getStatusCode() === 408 ? PaymentError::ProviderTimeout : PaymentError::Unknown));
+            $error = $this->errorFor($response->getStatusCode(), $code);
             throw new ProviderException($error, (string) ($payload['message'] ?? 'MTN MoMo request failed'));
         }
         return $response;
     }
 
     private function status(string $status): PaymentStatus { return match (strtoupper($status)) { 'SUCCESSFUL' => PaymentStatus::Success, 'PENDING' => PaymentStatus::Pending, 'FAILED' => PaymentStatus::Failed, default => throw new ProviderException(PaymentError::Unknown, 'Unknown MTN MoMo status') }; }
+    private function errorFor(int $httpStatus, string $code): PaymentError
+    {
+        if (in_array($code, ['RESOURCE_NOT_FOUND', 'PAYER_NOT_FOUND', 'NOT_ENOUGH_FUNDS'], true)) {
+            return PaymentError::InsufficientFunds;
+        }
+        if (in_array($code, ['APPROVAL_REJECTED', 'EXPIRED'], true)) {
+            return PaymentError::UserCancelled;
+        }
+        if ($httpStatus >= 500 || $httpStatus === 408 || $httpStatus === 429) {
+            return PaymentError::ProviderTimeout;
+        }
+
+        return PaymentError::Unknown;
+    }
     private function json(ResponseInterface $response): array { return $this->decode((string) $response->getBody()); }
     private function decode(string $body): array { $payload = json_decode($body, true, 512, JSON_THROW_ON_ERROR); if (!is_array($payload)) { throw new ProviderException(PaymentError::Unknown, 'Invalid MTN MoMo JSON response'); } return $payload; }
     private function header(array $headers, string $name): ?string { foreach ($headers as $key => $value) { if (strtolower($key) === $name && is_string($value)) { return $value; } } return null; }

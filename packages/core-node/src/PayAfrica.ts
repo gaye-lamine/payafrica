@@ -4,6 +4,7 @@ import type {
   PaymentRequest,
   PaymentSession,
   PaymentStatus,
+  PaymentStatusResult,
   RefundResult,
 } from "./types.js";
 
@@ -14,7 +15,7 @@ export class PayAfrica {
     return this.provider.initiatePayment(params);
   }
 
-  public checkStatus(sessionId: string): Promise<PaymentStatus> {
+  public checkStatus(sessionId: string): Promise<PaymentStatusResult> {
     return this.provider.checkStatus(sessionId);
   }
 

@@ -7,8 +7,11 @@ import {
   type PaymentProvider,
   type PaymentRequest,
   type PaymentSession,
+  type PaymentStatusResult,
   type RefundResult,
 } from "../types.js";
+import { validateRefundAmount } from "../refund-validation.js";
+import { InMemoryWebhookEventStore, type WebhookEventStore } from "../webhook-event-store.js";
 
 const BASE_URLS = {
   sandbox: "https://sandbox.momodeveloper.mtn.com",
@@ -23,6 +26,7 @@ export interface MtnMomoProviderConfig {
   apiKey: string;
   targetEnvironment: MtnMomoEnvironment;
   defaultCurrency: string;
+  webhookEventStore?: WebhookEventStore;
 }
 
 interface MtnTokenResponse {
@@ -36,6 +40,7 @@ interface MtnRequestToPay {
   externalId?: string;
   referenceId?: string;
   status?: string;
+  code?: string;
 }
 
 interface MtnErrorResponse {
@@ -58,8 +63,11 @@ export class MtnMomoProviderError extends Error {
 export class MtnMomoProvider implements PaymentProvider {
   private accessToken?: string;
   private accessTokenExpiresAt = 0;
+  private readonly webhookEventStore: WebhookEventStore;
 
-  public constructor(private readonly config: MtnMomoProviderConfig) {}
+  public constructor(private readonly config: MtnMomoProviderConfig) {
+    this.webhookEventStore = config.webhookEventStore ?? new InMemoryWebhookEventStore();
+  }
 
   public async initiatePayment(params: PaymentRequest): Promise<PaymentSession> {
     if (params.customerPhone === undefined || params.customerPhone.length === 0) {
@@ -89,12 +97,12 @@ export class MtnMomoProvider implements PaymentProvider {
     };
   }
 
-  public async checkStatus(sessionId: string): Promise<PaymentStatus> {
+  public async checkStatus(sessionId: string): Promise<PaymentStatusResult> {
     const transaction = await this.getRequestToPay(sessionId);
     if (typeof transaction.status !== "string") {
       throw new MtnMomoProviderError(PaymentError.Unknown, "MTN MoMo response is missing status");
     }
-    return this.toPaymentStatus(transaction.status);
+    return this.toPaymentStatusResult(transaction.status, transaction.code);
   }
 
   public async handleWebhook(
@@ -113,18 +121,35 @@ export class MtnMomoProvider implements PaymentProvider {
       throw new MtnMomoProviderError(PaymentError.Unknown, "Incomplete MTN MoMo webhook payload");
     }
 
-    return {
+    const event: PaymentEvent = {
       id: payload.id ?? sessionId,
       sessionId,
       status: this.toPaymentStatus(payload.status),
       ...(payload.externalId === undefined ? {} : { reference: payload.externalId }),
       occurredAt: payload.timestamp ?? new Date().toISOString(),
     };
+    return this.webhookEventStore.record(event);
   }
 
   public async refund(sessionId: string, amount?: number): Promise<RefundResult> {
-    const originalTransaction = amount === undefined ? await this.getRequestToPay(sessionId) : undefined;
-    const refundAmount = amount ?? this.parseAmount(originalTransaction?.amount);
+    if (amount !== undefined) {
+      validateRefundAmount(
+        amount,
+        (code, message) => new MtnMomoProviderError(code, message)
+      );
+    }
+
+    const originalTransaction = await this.getRequestToPay(sessionId);
+    const originalAmount = this.parseAmount(originalTransaction.amount);
+
+    if (amount !== undefined && amount > originalAmount) {
+      throw new MtnMomoProviderError(
+        PaymentError.RefundAmountExceedsBalance,
+        "Refund amount exceeds the original payment amount"
+      );
+    }
+
+    const refundAmount = amount ?? originalAmount;
     const refundId = randomUUID();
 
     await this.request("/collection/v1_0/refund", {
@@ -246,6 +271,15 @@ export class MtnMomoProvider implements PaymentProvider {
       default:
         throw new MtnMomoProviderError(PaymentError.Unknown, "Unknown MTN MoMo payment status");
     }
+  }
+
+  private toPaymentStatusResult(status: string, errorCode?: string): PaymentStatusResult {
+    const paymentStatus = this.toPaymentStatus(status);
+    if (paymentStatus !== PaymentStatus.Failed) {
+      return { status: paymentStatus };
+    }
+
+    return { status: paymentStatus, error: this.mapError(200, errorCode) };
   }
 
   private parseAmount(value: string | undefined): number {

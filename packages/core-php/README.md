@@ -74,7 +74,10 @@ $session = $payAfrica->initiatePayment(new PaymentRequest(
 ));
 
 // 2. Vérifier le statut.
-$status = $payAfrica->checkStatus($session->id);
+$statusResult = $payAfrica->checkStatus($session->id);
+if ($statusResult->status === PaymentStatus::Failed) {
+    $error = $statusResult->error;
+}
 
 // 3. Une route webhook doit transmettre le body brut, sans json_decode préalable.
 $rawBody = file_get_contents('php://input');

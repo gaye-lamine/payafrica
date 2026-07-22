@@ -6,13 +6,16 @@ namespace PayAfrica\Sdk\Providers;
 
 use GuzzleHttp\Psr7\HttpFactory;
 use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
+use PayAfrica\Sdk\Contracts\WebhookEventStoreInterface;
 use PayAfrica\Sdk\DTO\PaymentEvent;
 use PayAfrica\Sdk\DTO\PaymentRequest;
 use PayAfrica\Sdk\DTO\PaymentSession;
+use PayAfrica\Sdk\DTO\PaymentStatusResult;
 use PayAfrica\Sdk\DTO\RefundResult;
 use PayAfrica\Sdk\Enums\PaymentError;
 use PayAfrica\Sdk\Enums\PaymentStatus;
 use PayAfrica\Sdk\Exceptions\ProviderException;
+use PayAfrica\Sdk\Support\InMemoryWebhookEventStore;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -24,6 +27,7 @@ final class OrangeMoneyProvider implements PaymentProviderInterface
 
     private ?string $accessToken = null;
     private int $accessTokenExpiresAt = 0;
+    private readonly WebhookEventStoreInterface $webhookEventStore;
 
     public function __construct(
         private readonly ClientInterface $httpClient,
@@ -34,7 +38,11 @@ final class OrangeMoneyProvider implements PaymentProviderInterface
         private readonly string $callbackUrl,
         private readonly string $webhookApiKey,
         private readonly string $environment = 'sandbox',
+        ?WebhookEventStoreInterface $webhookEventStore = null,
     ) {
+        // A process-global default would not persist reliably across PHP requests.
+        // Production integrations should inject a durable shared store explicitly.
+        $this->webhookEventStore = $webhookEventStore ?? new InMemoryWebhookEventStore();
     }
 
     public function initiatePayment(PaymentRequest $params): PaymentSession
@@ -59,7 +67,7 @@ final class OrangeMoneyProvider implements PaymentProviderInterface
         return new PaymentSession($params->reference, $params->reference, $params->amount, $params->currency, PaymentStatus::Pending, $paymentUrl);
     }
 
-    public function checkStatus(string $sessionId): PaymentStatus
+    public function checkStatus(string $sessionId): PaymentStatusResult
     {
         $query = http_build_query(['reference' => $sessionId, 'type' => 'WEB_PAYMENT']);
         $payload = $this->json($this->request('GET', '/api/eWallet/v1/transactions?' . $query));
@@ -69,12 +77,14 @@ final class OrangeMoneyProvider implements PaymentProviderInterface
             throw new ProviderException(PaymentError::Unknown, 'Orange Money transaction was not found');
         }
 
-        return match (strtoupper($status)) {
-            'ACCEPTED', 'SUCCESS' => PaymentStatus::Success,
-            'PENDING', 'INITIATED' => PaymentStatus::Pending,
-            'CANCELLED', 'REJECTED', 'FAILED' => PaymentStatus::Failed,
-            default => throw new ProviderException(PaymentError::Unknown, 'Unknown Orange Money status'),
-        };
+        $paymentStatus = $this->status($status);
+
+        return new PaymentStatusResult(
+            $paymentStatus,
+            $paymentStatus === PaymentStatus::Failed
+                ? $this->errorForCode((string) ($transaction['code'] ?? ''))
+                : null,
+        );
     }
 
     public function handleWebhook(string $rawBody, array $headers): PaymentEvent
@@ -90,10 +100,12 @@ final class OrangeMoneyProvider implements PaymentProviderInterface
             throw new ProviderException(PaymentError::Unknown, 'Incomplete Orange Money webhook payload');
         }
 
-        return new PaymentEvent((string) ($payload['id'] ?? $payload['transactionId'] ?? $sessionId), $sessionId, $this->status($status), (string) ($payload['timestamp'] ?? gmdate(DATE_ATOM)), isset($payload['reference']) ? (string) $payload['reference'] : null);
+        $event = new PaymentEvent((string) ($payload['id'] ?? $payload['transactionId'] ?? $sessionId), $sessionId, $this->status($status), (string) ($payload['timestamp'] ?? gmdate(DATE_ATOM)), isset($payload['reference']) ? (string) $payload['reference'] : null);
+
+        return $this->webhookEventStore->process($event, fn (PaymentEvent $event): PaymentEvent => $this->processWebhookEvent($event));
     }
 
-    public function refund(string $sessionId, ?int $amount = null): RefundResult
+    public function refund(string $sessionId, int|float|null $amount = null): RefundResult
     {
         throw new ProviderException(PaymentError::Unknown, 'Orange Money does not support self-service merchant refunds');
     }
@@ -108,6 +120,11 @@ final class OrangeMoneyProvider implements PaymentProviderInterface
             $request = $request->withBody($factory->createStream(json_encode($body, JSON_THROW_ON_ERROR)));
         }
         return $this->send($request);
+    }
+
+    private function processWebhookEvent(PaymentEvent $event): PaymentEvent
+    {
+        return $event;
     }
 
     private function token(): string
@@ -140,12 +157,7 @@ final class OrangeMoneyProvider implements PaymentProviderInterface
         if ($response->getStatusCode() >= 400) {
             $payload = $this->json($response);
             $code = (string) ($payload['code'] ?? $response->getStatusCode());
-            $error = match ($code) {
-                '2020', '2021' => PaymentError::InsufficientFunds,
-                '2000', '2001' => PaymentError::InvalidPhone,
-                '500', '50', '51', '1', '2', '5' => PaymentError::ProviderTimeout,
-                default => PaymentError::Unknown,
-            };
+            $error = $this->errorForCode($code);
             throw new ProviderException($error, (string) ($payload['message'] ?? 'Orange Money request failed'));
         }
         return $response;
@@ -172,6 +184,16 @@ final class OrangeMoneyProvider implements PaymentProviderInterface
             'PENDING', 'INITIATED' => PaymentStatus::Pending,
             'CANCELLED', 'REJECTED', 'FAILED' => PaymentStatus::Failed,
             default => throw new ProviderException(PaymentError::Unknown, 'Unknown Orange Money status'),
+        };
+    }
+
+    private function errorForCode(string $code): PaymentError
+    {
+        return match ($code) {
+            '2020', '2021' => PaymentError::InsufficientFunds,
+            '2000', '2001' => PaymentError::InvalidPhone,
+            '500', '50', '51', '1', '2', '5' => PaymentError::ProviderTimeout,
+            default => PaymentError::Unknown,
         };
     }
 

@@ -74,7 +74,9 @@ session = await payafrica.initiate_payment(PaymentRequest(
 ))
 
 # 2. Vérifier le statut.
-status = await payafrica.check_status(session.id)
+status_result = await payafrica.check_status(session.id)
+if status_result.status is PaymentStatus.FAILED:
+    error = status_result.error
 
 # 3. Utilisez toujours le body brut pour les webhooks signés.
 @app.post("/webhooks/payments")

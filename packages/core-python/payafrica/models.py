@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Mapping
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .enums import PaymentError, PaymentStatus
 
@@ -29,6 +29,19 @@ class PaymentSession(_FrozenModel):
     status: PaymentStatus
     payment_url: str | None = None
     expires_at: str | None = None
+
+
+class PaymentStatusResult(_FrozenModel):
+    status: PaymentStatus
+    error: PaymentError | None = None
+
+    @model_validator(mode="after")
+    def validate_error_for_status(self) -> PaymentStatusResult:
+        if self.status is PaymentStatus.FAILED and self.error is None:
+            raise ValueError("A failed payment status requires a PaymentError")
+        if self.status is not PaymentStatus.FAILED and self.error is not None:
+            raise ValueError("Only a failed payment status may include a PaymentError")
+        return self
 
 
 class PaymentEvent(_FrozenModel):
