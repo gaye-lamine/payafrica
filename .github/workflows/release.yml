@@ -3,6 +3,12 @@ name: Release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: Tag to create in the PHP mirror (defaults to mirror-test-<run number>)
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -10,6 +16,7 @@ permissions:
 jobs:
   publish-npm:
     name: Publish npm packages
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +41,7 @@ jobs:
 
   publish-pypi:
     name: Publish Python package
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,8 +58,9 @@ jobs:
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
-  prepare-packagist:
-    name: Prepare Packagist release
+  validate-composer:
+    name: Validate Composer package
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -61,5 +70,46 @@ jobs:
       - name: Validate Composer package
         working-directory: packages/core-php
         run: composer validate --strict
-      - name: Report tag for Packagist auto-update
-        run: echo "Packagist can synchronize package metadata from tag $GITHUB_REF_NAME."
+
+  publish-php-mirror:
+    name: Publish PHP mirror
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify mirror authentication is configured
+        env:
+          MIRROR_TOKEN: ${{ secrets.PAYAFRICA_PHP_MIRROR_TOKEN }}
+        run: |
+          if [ -z "$MIRROR_TOKEN" ]; then
+            echo "::error title=Missing PAYAFRICA_PHP_MIRROR_TOKEN::Create the repository secret PAYAFRICA_PHP_MIRROR_TOKEN with Contents: Read and write access to gaye-lamine/payafrica-php."
+            exit 1
+          fi
+      - name: Resolve mirror tag
+        id: mirror-tag
+        env:
+          REQUESTED_TAG: ${{ inputs.tag_name }}
+          SOURCE_TAG: ${{ github.ref_name }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            tag_name="${REQUESTED_TAG:-mirror-test-${RUN_NUMBER}}"
+          else
+            tag_name="$SOURCE_TAG"
+          fi
+          git check-ref-format --allow-onelevel "refs/tags/${tag_name}"
+          echo "name=${tag_name}" >> "$GITHUB_OUTPUT"
+      - name: Split PHP package history
+        run: git subtree split --prefix=packages/core-php -b php-mirror-branch
+      - name: Push PHP package and matching tag to the mirror
+        env:
+          MIRROR_TOKEN: ${{ secrets.PAYAFRICA_PHP_MIRROR_TOKEN }}
+          RELEASE_TAG: ${{ steps.mirror-tag.outputs.name }}
+        run: |
+          git remote add php-mirror "https://x-access-token:${MIRROR_TOKEN}@github.com/gaye-lamine/payafrica-php.git"
+          git push php-mirror php-mirror-branch:main --force
+          git tag --force "$RELEASE_TAG" php-mirror-branch
+          git push php-mirror "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
