@@ -1,0 +1,43 @@
+# Changelog
+
+Toutes les modifications notables de PayAfrica SDK sont documentées dans ce
+fichier.
+
+## 2.0.0 — 2026-07-22
+
+### Breaking changes
+
+- `checkStatus` ne retourne plus un `PaymentStatus` seul. Dans les SDK Node,
+  PHP et Python, il retourne maintenant un `PaymentStatusResult` contenant
+  `status` et, uniquement pour un échec, `error`.
+- Les intégrateurs doivent remplacer les comparaisons directes avec le résultat
+  de `checkStatus` par la lecture de `result.status`. Lorsque ce statut vaut
+  `failed`, `result.error` contient obligatoirement le `PaymentError`
+  normalisé. Les implémentations externes de `PaymentProvider` doivent adopter
+  ce nouveau type de retour.
+
+### Features
+
+- Ajout de `PaymentStatusResult` et propagation de la cause normalisée d'un
+  échec de paiement pour Orange Money, Wave et MTN MoMo.
+- Idempotence des webhooks via `WebhookEventStore` injectable et une
+  implémentation mémoire par défaut, partagée durant la vie d'une instance de
+  provider.
+- Validation locale des remboursements Wave et MTN MoMo avant tout appel de
+  remboursement : montant entier positif sûr et plafond égal au montant
+  original connu de la transaction.
+- Nouveaux codes `PaymentError` : `INVALID_REFUND_AMOUNT` et
+  `REFUND_AMOUNT_EXCEEDS_BALANCE`.
+- Prise en charge de `PaymentStatus.Expired` pour Wave dans les SDK Node, PHP
+  et Python, à partir de `checkout_status: "expired"` et des webhooks Wave.
+  Orange Money et MTN MoMo restent explicitement non supportés pour ce statut.
+- Invariant de `PaymentStatusResult` vérifié à l'exécution en PHP et Python,
+  et par l'union discriminée TypeScript en Node.
+
+### Fixes
+
+- Les SDK Python alignent désormais le traitement des statuts provider
+  inconnus sur Node et PHP : ils sont rejetés comme `UNKNOWN` au lieu d'être
+  silencieusement transformés en `failed`.
+- Le remboursement total est explicitement exempté du contrôle de dépassement
+  de montant original ; seul un montant partiel fourni est comparé au plafond.
