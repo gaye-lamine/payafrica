@@ -103,6 +103,12 @@ Fermez le client HTTPX au cycle de vie de votre application avec `await client.a
 
 Les adaptateurs lèvent `ProviderError`; inspectez `error.code` et effectuez un `check_status` après un timeout avant toute action métier.
 
+## Tester sans clés API
+
+Lancez `payafrica dev`, puis passez `base_url="http://localhost:4004/mock/wave"`
+au vrai `WaveProvider`. En production, retirez seulement `base_url` et remplacez
+les valeurs d'environnement.
+
 ## Tests
 
 ```bash

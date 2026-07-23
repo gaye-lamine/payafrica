@@ -6,7 +6,7 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Démarrer",
-      items: ["getting-started/quickstart"],
+      items: ["getting-started/quickstart", "getting-started/testing-without-api-keys"],
     },
     {
       type: "category",

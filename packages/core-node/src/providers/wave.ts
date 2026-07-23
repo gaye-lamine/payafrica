@@ -18,6 +18,8 @@ const WAVE_API_BASE_URL = "https://api.wave.com/v1";
 export interface WaveProviderConfig {
   apiKey: string;
   webhookSecret: string;
+  /** Override for local API-compatible mocks. Defaults to the Wave API. */
+  baseUrl?: string;
   webhookEventStore?: WebhookEventStore;
 }
 
@@ -183,7 +185,7 @@ export class WaveProvider implements PaymentProvider {
   private async request(path: string, init: RequestInit = {}): Promise<Response> {
     let response: Response;
     try {
-      response = await fetch(`${WAVE_API_BASE_URL}${path}`, {
+      response = await fetch(`${this.baseUrl()}${path}`, {
         ...init,
         headers: {
           Authorization: `Bearer ${this.config.apiKey}`,
@@ -199,6 +201,10 @@ export class WaveProvider implements PaymentProvider {
       throw await this.toResponseError(response);
     }
     return response;
+  }
+
+  private baseUrl(): string {
+    return (this.config.baseUrl ?? WAVE_API_BASE_URL).replace(/\/$/, "");
   }
 
   private async getCheckoutSession(sessionId: string): Promise<WaveCheckoutSession> {

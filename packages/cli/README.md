@@ -1,5 +1,16 @@
 # PayAfrica CLI
 
+## Mode sans clés API
+
+```bash
+npx @payafrica/cli init --language node --framework express --providers wave --mock
+payafrica dev
+```
+
+La commande génère `WAVE_API_KEY=mock_wave_key`, `WAVE_WEBHOOK_SECRET=mock_wave_webhook`
+et `WAVE_BASE_URL=http://localhost:4004/mock/wave`. En production, remplacez
+les clés et supprimez uniquement la ligne `WAVE_BASE_URL`.
+
 La CLI PayAfrica génère une base d'intégration, contrôle la configuration
 locale et fournit un simulateur de webhooks de développement.
 

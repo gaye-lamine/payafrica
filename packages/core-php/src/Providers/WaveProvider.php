@@ -40,7 +40,7 @@ final class WaveProvider implements PaymentProviderInterface
     private const BASE_URL = 'https://api.wave.com/v1';
     private readonly WebhookEventStoreInterface $webhookEventStore;
 
-    public function __construct(private readonly ClientInterface $httpClient, private readonly string $apiKey, private readonly string $webhookSecret, ?WebhookEventStoreInterface $webhookEventStore = null)
+    public function __construct(private readonly ClientInterface $httpClient, private readonly string $apiKey, private readonly string $webhookSecret, ?WebhookEventStoreInterface $webhookEventStore = null, private readonly ?string $baseUrlOverride = null)
     {
         // A process-global default would share mutable state across unrelated workers.
         // Inject a durable shared store when deduplication must survive requests.
@@ -139,7 +139,7 @@ final class WaveProvider implements PaymentProviderInterface
     private function request(string $method, string $path, ?array $body = null): ResponseInterface
     {
         $factory = new HttpFactory();
-        $request = $factory->createRequest($method, self::BASE_URL . $path)
+        $request = $factory->createRequest($method, $this->baseUrl() . $path)
             ->withHeader('Authorization', 'Bearer ' . $this->apiKey)
             ->withHeader('Content-Type', 'application/json');
         if ($body !== null) {
@@ -157,6 +157,11 @@ final class WaveProvider implements PaymentProviderInterface
             throw new ProviderException($error, (string) ($payload['error_message'] ?? 'Wave request failed'));
         }
         return $response;
+    }
+
+    private function baseUrl(): string
+    {
+        return rtrim($this->baseUrlOverride ?? self::BASE_URL, '/');
     }
 
     /** @return WaveCheckoutSession */

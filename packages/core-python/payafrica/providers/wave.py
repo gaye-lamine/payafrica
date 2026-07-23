@@ -32,8 +32,9 @@ class WaveCheckoutSession(TypedDict, total=False):
 class WaveProvider(PaymentProvider):
     _BASE_URL = "https://api.wave.com/v1"
 
-    def __init__(self, client: httpx.AsyncClient, api_key: str, webhook_secret: str, webhook_event_store: WebhookEventStore | None = None) -> None:
+    def __init__(self, client: httpx.AsyncClient, api_key: str, webhook_secret: str, webhook_event_store: WebhookEventStore | None = None, base_url: str | None = None) -> None:
         self._client, self._api_key, self._webhook_secret = client, api_key, webhook_secret
+        self._base_url = (base_url if base_url is not None else self._BASE_URL).rstrip("/")
         # The in-memory default is instance-local; inject durable shared storage in production.
         self._webhook_event_store = (
             webhook_event_store
@@ -105,7 +106,7 @@ class WaveProvider(PaymentProvider):
         return cast(WaveCheckoutSession, await self._request("GET", f"/checkout/sessions/{session_id}"))
 
     async def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
-        try: response = await self._client.request(method, self._BASE_URL + path, headers={"Authorization": f"Bearer {self._api_key}"}, **kwargs)
+        try: response = await self._client.request(method, self._base_url + path, headers={"Authorization": f"Bearer {self._api_key}"}, **kwargs)
         except httpx.HTTPError as exc: raise ProviderError(PaymentError.PROVIDER_TIMEOUT, str(exc)) from exc
         payload = response.json() if response.content else {}; payload = payload if isinstance(payload, dict) else {}
         if response.is_error:

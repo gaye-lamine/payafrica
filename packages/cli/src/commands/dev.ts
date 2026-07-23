@@ -1,5 +1,6 @@
 import { createHmac, randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { createProviderMocks } from "./mock-api.js";
 
 const DEV_WEBHOOK_SECRET = "whsec_dev_12345";
 const MAX_REQUEST_SIZE = 1_048_576;
@@ -54,11 +55,13 @@ export async function devCommand(options: DevCommandOptions): Promise<void> {
 export function createDevServer(target: string): Server {
   const webhookTarget = validateTarget(target);
   const sessions = new Map<string, CheckoutSession>();
+  const handleMock = createProviderMocks();
 
   return createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", "http://localhost");
 
     try {
+      if (await handleMock(request, response, url)) return;
       if (request.method === "POST" && url.pathname === "/v1/checkout/sessions") {
         await createCheckoutSession(request, response, sessions);
         return;

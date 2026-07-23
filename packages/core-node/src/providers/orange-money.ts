@@ -27,6 +27,8 @@ export interface OrangeMoneyProviderConfig {
   environment: OrangeMoneyEnvironment;
   callbackUrl: string;
   webhookApiKey: string;
+  /** Override for local API-compatible mocks. */
+  baseUrl?: string;
   webhookEventStore?: WebhookEventStore;
 }
 
@@ -175,7 +177,7 @@ export class OrangeMoneyProvider implements PaymentProvider {
     let response: Response;
 
     try {
-      response = await fetch(`${BASE_URLS[this.config.environment]}${path}`, {
+      response = await fetch(`${this.baseUrl()}${path}`, {
         ...init,
         headers: {
           Authorization: `Bearer ${token}`,
@@ -203,7 +205,7 @@ export class OrangeMoneyProvider implements PaymentProvider {
     let response: Response;
 
     try {
-      response = await fetch(`${BASE_URLS[this.config.environment]}/oauth/v1/token`, {
+      response = await fetch(`${this.baseUrl()}/oauth/v1/token`, {
         method: "POST",
         headers: {
           Authorization: `Basic ${credentials}`,
@@ -228,6 +230,10 @@ export class OrangeMoneyProvider implements PaymentProvider {
     const expiresInSeconds = typeof body.expires_in === "number" ? body.expires_in : 300;
     this.accessTokenExpiresAt = Date.now() + Math.max(0, expiresInSeconds - 30) * 1_000;
     return this.accessToken;
+  }
+
+  private baseUrl(): string {
+    return (this.config.baseUrl ?? BASE_URLS[this.config.environment]).replace(/\/$/, "");
   }
 
   private async toResponseError(response: Response): Promise<OrangeMoneyProviderError> {

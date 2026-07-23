@@ -26,6 +26,8 @@ export interface MtnMomoProviderConfig {
   apiKey: string;
   targetEnvironment: MtnMomoEnvironment;
   defaultCurrency: string;
+  /** Override for local API-compatible mocks. */
+  baseUrl?: string;
   webhookEventStore?: WebhookEventStore;
 }
 
@@ -181,7 +183,7 @@ export class MtnMomoProvider implements PaymentProvider {
     const token = await this.getAccessToken();
     let response: Response;
     try {
-      response = await fetch(`${BASE_URLS[this.config.targetEnvironment]}${path}`, {
+      response = await fetch(`${this.baseUrl()}${path}`, {
         ...init,
         headers: {
           Authorization: `Bearer ${token}`,
@@ -209,7 +211,7 @@ export class MtnMomoProvider implements PaymentProvider {
     const credentials = Buffer.from(`${this.config.apiUser}:${this.config.apiKey}`).toString("base64");
     let response: Response;
     try {
-      response = await fetch(`${BASE_URLS[this.config.targetEnvironment]}/collection/token/`, {
+      response = await fetch(`${this.baseUrl()}/collection/token/`, {
         method: "POST",
         headers: {
           Authorization: `Basic ${credentials}`,
@@ -232,6 +234,10 @@ export class MtnMomoProvider implements PaymentProvider {
     const expiresInSeconds = typeof body.expires_in === "number" ? body.expires_in : 300;
     this.accessTokenExpiresAt = Date.now() + Math.max(0, expiresInSeconds - 30) * 1_000;
     return this.accessToken;
+  }
+
+  private baseUrl(): string {
+    return (this.config.baseUrl ?? BASE_URLS[this.config.targetEnvironment]).replace(/\/$/, "");
   }
 
   private async toResponseError(response: Response): Promise<MtnMomoProviderError> {

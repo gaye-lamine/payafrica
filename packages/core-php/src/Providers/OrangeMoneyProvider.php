@@ -39,6 +39,7 @@ final class OrangeMoneyProvider implements PaymentProviderInterface
         private readonly string $webhookApiKey,
         private readonly string $environment = 'sandbox',
         ?WebhookEventStoreInterface $webhookEventStore = null,
+        private readonly ?string $baseUrlOverride = null,
     ) {
         // A process-global default would not persist reliably across PHP requests.
         // Production integrations should inject a durable shared store explicitly.
@@ -209,6 +210,9 @@ final class OrangeMoneyProvider implements PaymentProviderInterface
 
     private function baseUrl(): string
     {
+        if ($this->baseUrlOverride !== null) {
+            return rtrim($this->baseUrlOverride, '/');
+        }
         return $this->environment === 'live' ? self::LIVE_URL : self::SANDBOX_URL;
     }
 }

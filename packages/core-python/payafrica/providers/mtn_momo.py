@@ -20,9 +20,9 @@ from ..webhook_event_store import InMemoryWebhookEventStore, WebhookEventStore
 class MtnMomoProvider(PaymentProvider):
     _BASE_URLS = {"sandbox": "https://sandbox.momodeveloper.mtn.com", "production": "https://proxy.momoapi.mtn.com"}
 
-    def __init__(self, client: httpx.AsyncClient, subscription_key: str, api_user: str, api_key: str, target_environment: str = "sandbox", default_currency: str = "XOF", webhook_event_store: WebhookEventStore | None = None) -> None:
+    def __init__(self, client: httpx.AsyncClient, subscription_key: str, api_user: str, api_key: str, target_environment: str = "sandbox", default_currency: str = "XOF", webhook_event_store: WebhookEventStore | None = None, base_url: str | None = None) -> None:
         self._client, self._subscription_key, self._api_user, self._api_key = client, subscription_key, api_user, api_key
-        self._target_environment, self._default_currency, self._base_url = target_environment, default_currency, self._BASE_URLS[target_environment]
+        self._target_environment, self._default_currency, self._base_url = target_environment, default_currency, (base_url if base_url is not None else self._BASE_URLS[target_environment]).rstrip("/")
         self._token: str | None = None; self._token_expires_at = 0.0
         # A process-wide singleton would couple unrelated app instances; production must
         # inject durable storage shared by its webhook handling workers.

@@ -18,6 +18,7 @@ program
   .option("--language <language>", "Backend language: node, php, or python")
   .option("--framework <framework>", "Framework compatible with the selected language")
   .option("--providers <providers>", "Comma-separated providers: orange-money, wave, mtn-momo")
+  .option("--mock", "Generate local mock credentials and provider base URLs")
   .action((options: InitCommandOptions) => initCommand(options));
 
 program

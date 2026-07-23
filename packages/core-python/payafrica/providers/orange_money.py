@@ -17,10 +17,10 @@ from ..webhook_event_store import InMemoryWebhookEventStore, WebhookEventStore
 class OrangeMoneyProvider(PaymentProvider):
     _BASE_URLS = {"sandbox": "https://api.sandbox.orange-sonatel.com", "live": "https://api.orange-sonatel.com"}
 
-    def __init__(self, client: httpx.AsyncClient, client_id: str, client_secret: str, merchant_code: str, sitename: str, callback_url: str, webhook_api_key: str, environment: str = "sandbox", webhook_event_store: WebhookEventStore | None = None) -> None:
+    def __init__(self, client: httpx.AsyncClient, client_id: str, client_secret: str, merchant_code: str, sitename: str, callback_url: str, webhook_api_key: str, environment: str = "sandbox", webhook_event_store: WebhookEventStore | None = None, base_url: str | None = None) -> None:
         self._client, self._client_id, self._client_secret = client, client_id, client_secret
         self._merchant_code, self._sitename, self._callback_url, self._webhook_api_key = merchant_code, sitename, callback_url, webhook_api_key
-        self._base_url = self._BASE_URLS[environment]
+        self._base_url = (base_url if base_url is not None else self._BASE_URLS[environment]).rstrip("/")
         self._token: str | None = None
         self._token_expires_at = 0.0
         # A module-global default leaks state between app instances and is not durable.

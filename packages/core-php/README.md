@@ -101,6 +101,12 @@ Traitez `PaymentEvent::$id` de manière idempotente et répondez seulement aprè
 
 Les adaptateurs lèvent `ProviderException`; consultez sa propriété `paymentError` pour appliquer une décision métier sûre.
 
+## Tester sans clés API
+
+Lancez `payafrica dev`, puis passez `http://localhost:4004/mock/wave` comme dernier
+argument `baseUrlOverride` du vrai `WaveProvider`. En production, retirez seulement
+cette URL et remplacez les valeurs d'environnement.
+
 ## Tests
 
 ```bash

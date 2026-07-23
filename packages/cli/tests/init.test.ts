@@ -73,4 +73,15 @@ describe("initCommand non-interactive flags", () => {
     await expect(initCommand({ language: "php", framework: "express", providers: "wave" }))
       .rejects.toThrow("Invalid --framework for php. Expected one of: laravel, symfony, native.");
   });
+
+  it("generates mock credentials and local base URLs with --mock", async () => {
+    const directory = await useTemporaryDirectory();
+    await initCommand({ language: "node", framework: "express", providers: "orange-money,wave,mtn-momo", mock: true });
+    const env = await readFile(join(directory, ".env.payafrica.example"), "utf8");
+    expect(env).toContain("Mode test sans clés (--mock)");
+    expect(env).toContain("ORANGE_MONEY_BASE_URL=http://localhost:4004/mock/orange");
+    expect(env).toContain("WAVE_BASE_URL=http://localhost:4004/mock/wave");
+    expect(env).toContain("MTN_MOMO_BASE_URL=http://localhost:4004/mock/mtn");
+    expect(env).not.toContain("https://api.wave.com");
+  });
 });

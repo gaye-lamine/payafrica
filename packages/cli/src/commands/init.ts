@@ -22,12 +22,14 @@ export interface InitCommandOptions {
   language?: string;
   framework?: string;
   providers?: string;
+  mock?: boolean;
 }
 
 interface InitConfiguration {
   language: Language;
   framework: string;
   providers: readonly Provider[];
+  mock: boolean;
 }
 
 function exitOnCancel<T>(value: T | symbol): T {
@@ -71,9 +73,10 @@ export async function initCommand(options: InitCommandOptions = {}): Promise<voi
     })
   );
 
+  const mock = exitOnCancel(await select<boolean>({ message: "Mode test sans clés ?", options: [{ value: true, label: "Oui — utiliser le mock local" }, { value: false, label: "Non — configurer les API opérateur" }] }));
   const task = spinner();
   task.start("Generating PayAfrica integration files");
-  await generateFiles({ language, framework, providers });
+  await generateFiles({ language, framework, providers, mock });
   task.stop("PayAfrica files generated");
   outro("Review .env.payafrica.example, add your credentials locally, then wire the selected provider into your application.");
 }
@@ -88,7 +91,7 @@ function parseNonInteractiveOptions(options: InitCommandOptions): InitConfigurat
   const language = parseLanguage(options.language);
   const framework = parseFramework(language, options.framework);
   const providers = parseProviders(options.providers);
-  return { language, framework, providers };
+  return { language, framework, providers, mock: options.mock === true };
 }
 
 function parseLanguage(value: string | undefined): Language {
@@ -118,7 +121,7 @@ async function generateFiles(configuration: InitConfiguration): Promise<void> {
   const extension = configuration.language === "node" ? "ts" : configuration.language === "php" ? "php" : "py";
   const boilerplate = createBoilerplate(configuration.language, configuration.framework, configuration.providers);
   await Promise.all([
-    writeFile(resolve(cwd, ".env.payafrica.example"), generateEnvExample(configuration.providers), "utf8"),
+    writeFile(resolve(cwd, ".env.payafrica.example"), generateEnvExample(configuration.providers, configuration.mock), "utf8"),
     writeFile(resolve(cwd, `payafrica-integration.${extension}`), boilerplate, "utf8"),
   ]);
 }

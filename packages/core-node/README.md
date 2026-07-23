@@ -103,6 +103,12 @@ const refund = await payafrica.refund(session.id, 500);
 
 Les erreurs adapter sont rejetées avec leur code `PaymentError`. Ne confirmez jamais une commande sur un timeout : vérifiez ensuite le statut du provider.
 
+## Tester sans clés API
+
+Lancez `payafrica dev`, puis construisez le vrai `WaveProvider` avec des clés non vides
+et `baseUrl: "http://localhost:4004/mock/wave"`. En production, retirez seulement
+`baseUrl` et remplacez les valeurs d'environnement.
+
 ## Tests
 
 ```bash

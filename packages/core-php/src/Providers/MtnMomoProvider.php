@@ -38,6 +38,7 @@ final class MtnMomoProvider implements PaymentProviderInterface
         private readonly string $targetEnvironment = 'sandbox',
         private readonly string $defaultCurrency = 'XOF',
         ?WebhookEventStoreInterface $webhookEventStore = null,
+        private readonly ?string $baseUrlOverride = null,
     ) {
         // A PHP worker-local store is safe for development only; production must
         // inject a durable store shared by webhook handling workers.
@@ -215,5 +216,8 @@ final class MtnMomoProvider implements PaymentProviderInterface
 
         return sprintf('%s-%s-%s-%s-%s', substr($hex, 0, 8), substr($hex, 8, 4), substr($hex, 12, 4), substr($hex, 16, 4), substr($hex, 20));
     }
-    private function baseUrl(): string { return $this->targetEnvironment === 'production' ? self::PRODUCTION_URL : self::SANDBOX_URL; }
+    private function baseUrl(): string
+    {
+        return rtrim($this->baseUrlOverride ?? ($this->targetEnvironment === 'production' ? self::PRODUCTION_URL : self::SANDBOX_URL), '/');
+    }
 }
