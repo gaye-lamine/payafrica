@@ -36,6 +36,39 @@ PayAfrica files generated
 Review .env.payafrica.example, add your credentials locally, then wire the selected provider into your application.
 ```
 
+### `init` non interactif
+
+Pour un script CI ou une installation automatisée, fournissez les trois options
+ensemble : `--language`, `--framework` et `--providers`. Les valeurs admises
+sont `node`, `php`, `python` ; les frameworks compatibles avec le langage ; et
+`orange-money`, `wave`, `mtn-momo` pour les providers (séparés par des virgules).
+
+```bash
+npx @payafrica/cli init --language node --framework express --providers wave,mtn-momo
+```
+
+Cette commande s'exécute silencieusement avec le code de sortie `0`. Lors de
+l'exécution réelle, elle a créé les fichiers suivants :
+
+```text
+.env.payafrica.example
+payafrica-integration.ts
+```
+
+Les trois flags sont requis ensemble. Sans flag, la CLI lance l'assistant
+interactif classique ; si une partie seulement des flags est fournie, elle
+renvoie une erreur au lieu de demander les valeurs manquantes.
+
+Exemple réel de valeur provider invalide (code de sortie `1`) :
+
+```bash
+npx @payafrica/cli init --language node --framework express --providers wave,fake-provider
+```
+
+```text
+Error: Invalid --providers value: fake-provider. Expected one of: orange-money, wave, mtn-momo.
+```
+
 ### `dev`
 
 Démarre un checkout local et émet des webhooks HMAC vers votre application.

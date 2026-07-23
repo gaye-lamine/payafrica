@@ -3,7 +3,7 @@ import { createHmac, randomUUID } from "node:crypto";
 type Provider = "wave" | "orange" | "mtn";
 type Outcome = "success" | "failed";
 
-interface PaymentEvent {
+export interface WebhookPayload {
   id: string;
   sessionId: string;
   status: "success" | "failed";
@@ -18,11 +18,10 @@ export interface TriggerCommandOptions {
 }
 
 export async function triggerCommand(event: string, options: TriggerCommandOptions): Promise<void> {
-  const parsedEvent = parseEvent(event);
+  const payload = buildWebhookPayload(event);
   const target = validateTarget(options.target);
-  const payload = createPaymentEvent(parsedEvent.provider, parsedEvent.outcome);
   const rawBody = JSON.stringify(payload);
-  const signature = createHmac("sha256", options.secret).update(rawBody).digest("hex");
+  const signature = signWebhook(rawBody, options.secret);
   const startedAt = performance.now();
 
   try {
@@ -46,6 +45,15 @@ export async function triggerCommand(event: string, options: TriggerCommandOptio
   }
 }
 
+export function buildWebhookPayload(event: string): WebhookPayload {
+  const parsedEvent = parseEvent(event);
+  return createPaymentEvent(parsedEvent.provider, parsedEvent.outcome);
+}
+
+export function signWebhook(rawBody: string, secret: string): string {
+  return createHmac("sha256", secret).update(rawBody).digest("hex");
+}
+
 function parseEvent(value: string): { provider: Provider; outcome: Outcome } {
   const match = value.match(/^(wave|orange|mtn)\.payment\.(success|failed)$/u);
   if (match?.[1] === undefined || match[2] === undefined) {
@@ -54,7 +62,7 @@ function parseEvent(value: string): { provider: Provider; outcome: Outcome } {
   return { provider: match[1] as Provider, outcome: match[2] as Outcome };
 }
 
-function createPaymentEvent(provider: Provider, outcome: Outcome): PaymentEvent {
+function createPaymentEvent(provider: Provider, outcome: Outcome): WebhookPayload {
   const sessionId = randomUUID();
   return {
     id: randomUUID(),

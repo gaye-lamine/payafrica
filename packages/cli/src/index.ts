@@ -2,7 +2,7 @@ import { Command } from "commander";
 
 import { devCommand, parsePort } from "./commands/dev.js";
 import { doctorCommand } from "./commands/doctor.js";
-import { initCommand } from "./commands/init.js";
+import { initCommand, type InitCommandOptions } from "./commands/init.js";
 import { triggerCommand } from "./commands/trigger.js";
 
 const program = new Command();
@@ -15,7 +15,10 @@ program
 program
   .command("init")
   .description("Interactively generate PayAfrica configuration and integration code")
-  .action(initCommand);
+  .option("--language <language>", "Backend language: node, php, or python")
+  .option("--framework <framework>", "Framework compatible with the selected language")
+  .option("--providers <providers>", "Comma-separated providers: orange-money, wave, mtn-momo")
+  .action((options: InitCommandOptions) => initCommand(options));
 
 program
   .command("dev")

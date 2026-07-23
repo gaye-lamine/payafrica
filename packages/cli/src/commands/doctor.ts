@@ -49,7 +49,7 @@ export async function doctorCommand(): Promise<void> {
   console.log("PayAfrica doctor");
   console.log("");
 
-  const nodeHealthy = getNodeMajorVersion() >= 20;
+  const nodeHealthy = getNodeMajorVersion(process.versions.node) >= 20;
   checks.push(nodeHealthy);
   report(nodeHealthy, `Node.js v${process.versions.node} ${nodeHealthy ? "(v20+ requis)" : "(v20+ requis)"}`);
 
@@ -99,7 +99,7 @@ async function findEnvFile(): Promise<string | undefined> {
   return undefined;
 }
 
-function parseEnv(content: string): Record<string, string> {
+export function parseEnv(content: string): Record<string, string> {
   const values: Record<string, string> = {};
   for (const line of content.split(/\r?\n/u)) {
     const trimmed = line.trim();
@@ -113,15 +113,15 @@ function parseEnv(content: string): Record<string, string> {
   return values;
 }
 
-function unquote(value: string): string {
+export function unquote(value: string): string {
   if (value.length >= 2 && ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'")))) {
     return value.slice(1, -1);
   }
   return value;
 }
 
-function getNodeMajorVersion(): number {
-  const [major] = process.versions.node.split(".");
+export function getNodeMajorVersion(versionString: string): number {
+  const [major] = versionString.replace(/^[vV]/u, "").split(".");
   return major === undefined ? 0 : Number(major);
 }
 

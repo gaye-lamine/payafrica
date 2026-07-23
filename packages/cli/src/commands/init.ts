@@ -10,6 +10,26 @@ import { generateEnvExample, type Provider } from "../generators/env.js";
 
 type Language = "node" | "php" | "python";
 
+const LANGUAGES: readonly Language[] = ["node", "php", "python"];
+const FRAMEWORKS: Readonly<Record<Language, readonly string[]>> = {
+  node: ["express", "fastify", "nestjs"],
+  php: ["laravel", "symfony", "native"],
+  python: ["fastapi", "django"],
+};
+const PROVIDERS: readonly Provider[] = ["orange-money", "wave", "mtn-momo"];
+
+export interface InitCommandOptions {
+  language?: string;
+  framework?: string;
+  providers?: string;
+}
+
+interface InitConfiguration {
+  language: Language;
+  framework: string;
+  providers: readonly Provider[];
+}
+
 function exitOnCancel<T>(value: T | symbol): T {
   if (isCancel(value)) {
     cancel("Generation cancelled.");
@@ -18,7 +38,13 @@ function exitOnCancel<T>(value: T | symbol): T {
   return value;
 }
 
-export async function initCommand(): Promise<void> {
+export async function initCommand(options: InitCommandOptions = {}): Promise<void> {
+  const nonInteractiveConfiguration = parseNonInteractiveOptions(options);
+  if (nonInteractiveConfiguration !== undefined) {
+    await generateFiles(nonInteractiveConfiguration);
+    return;
+  }
+
   intro(pc.bgCyan(pc.black(" Welcome to PayAfrica SDK Generator 🌍 ")));
 
   const language = exitOnCancel(
@@ -47,15 +73,54 @@ export async function initCommand(): Promise<void> {
 
   const task = spinner();
   task.start("Generating PayAfrica integration files");
-  const cwd = process.cwd();
-  const extension = language === "node" ? "ts" : language === "php" ? "php" : "py";
-  const boilerplate = createBoilerplate(language, framework, providers);
-  await Promise.all([
-    writeFile(resolve(cwd, ".env.payafrica.example"), generateEnvExample(providers), "utf8"),
-    writeFile(resolve(cwd, `payafrica-integration.${extension}`), boilerplate, "utf8"),
-  ]);
+  await generateFiles({ language, framework, providers });
   task.stop("PayAfrica files generated");
   outro("Review .env.payafrica.example, add your credentials locally, then wire the selected provider into your application.");
+}
+
+function parseNonInteractiveOptions(options: InitCommandOptions): InitConfiguration | undefined {
+  const values = [options.language, options.framework, options.providers];
+  if (values.every((value) => value === undefined)) return undefined;
+  if (values.some((value) => value === undefined)) {
+    throw new Error("Non-interactive init requires --language, --framework, and --providers together.");
+  }
+
+  const language = parseLanguage(options.language);
+  const framework = parseFramework(language, options.framework);
+  const providers = parseProviders(options.providers);
+  return { language, framework, providers };
+}
+
+function parseLanguage(value: string | undefined): Language {
+  if (value !== undefined && LANGUAGES.includes(value as Language)) return value as Language;
+  throw new Error("Invalid --language. Expected one of: node, php, python.");
+}
+
+function parseFramework(language: Language, value: string | undefined): string {
+  if (value !== undefined && FRAMEWORKS[language].includes(value)) return value;
+  throw new Error(`Invalid --framework for ${language}. Expected one of: ${FRAMEWORKS[language].join(", ")}.`);
+}
+
+function parseProviders(value: string | undefined): readonly Provider[] {
+  const selected = value?.split(",").map((provider) => provider.trim()).filter((provider) => provider.length > 0) ?? [];
+  const invalidProvider = selected.find((provider) => !PROVIDERS.includes(provider as Provider));
+  if (selected.length === 0) {
+    throw new Error("Invalid --providers. Use a comma-separated list of: orange-money, wave, mtn-momo.");
+  }
+  if (invalidProvider !== undefined) {
+    throw new Error(`Invalid --providers value: ${invalidProvider}. Expected one of: orange-money, wave, mtn-momo.`);
+  }
+  return selected as Provider[];
+}
+
+async function generateFiles(configuration: InitConfiguration): Promise<void> {
+  const cwd = process.cwd();
+  const extension = configuration.language === "node" ? "ts" : configuration.language === "php" ? "php" : "py";
+  const boilerplate = createBoilerplate(configuration.language, configuration.framework, configuration.providers);
+  await Promise.all([
+    writeFile(resolve(cwd, ".env.payafrica.example"), generateEnvExample(configuration.providers), "utf8"),
+    writeFile(resolve(cwd, `payafrica-integration.${extension}`), boilerplate, "utf8"),
+  ]);
 }
 
 async function selectFramework(language: Language): Promise<string | symbol> {

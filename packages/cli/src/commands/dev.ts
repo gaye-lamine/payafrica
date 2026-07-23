@@ -31,25 +31,30 @@ export interface DevCommandOptions {
 }
 
 export function parsePort(value: string): number {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error("--port must be an integer between 0 and 65535.");
+  }
   const port = Number(value);
-  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
-    throw new Error("--port must be an integer between 1 and 65535.");
+  if (!Number.isInteger(port) || port < 0 || port > 65_535) {
+    throw new Error("--port must be an integer between 0 and 65535.");
   }
   return port;
 }
 
 export async function devCommand(options: DevCommandOptions): Promise<void> {
-  const target = validateTarget(options.target);
-  const sessions = new Map<string, CheckoutSession>();
-  const server = createDevServer(sessions, target);
+  const server = createDevServer(options.target);
 
   await listen(server, options.port);
-  console.log(`PayAfrica dev server listening on http://localhost:${options.port}`);
-  console.log(`Webhook target: ${target.toString()}`);
+  const port = getListeningPort(server);
+  console.log(`PayAfrica dev server listening on http://localhost:${port}`);
+  console.log(`Webhook target: ${new URL(options.target).toString()}`);
   console.log(`Webhook HMAC secret: ${DEV_WEBHOOK_SECRET}`);
 }
 
-function createDevServer(sessions: Map<string, CheckoutSession>, target: URL): Server {
+export function createDevServer(target: string): Server {
+  const webhookTarget = validateTarget(target);
+  const sessions = new Map<string, CheckoutSession>();
+
   return createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", "http://localhost");
 
@@ -67,7 +72,7 @@ function createDevServer(sessions: Map<string, CheckoutSession>, target: URL): S
 
       const simulationMatch = url.pathname.match(/^\/checkout\/([^/]+)\/simulate$/);
       if (request.method === "POST" && simulationMatch?.[1] !== undefined) {
-        await simulateCheckout(request, response, sessions.get(simulationMatch[1]), target);
+        await simulateCheckout(request, response, sessions.get(simulationMatch[1]), webhookTarget);
         return;
       }
 
@@ -202,6 +207,14 @@ function getPort(request: IncomingMessage): number {
   const address = request.socket.localPort;
   if (address === undefined) throw new Error("Unable to determine local server port.");
   return address;
+}
+
+function getListeningPort(server: Server): number {
+  const address = server.address();
+  if (address === null || typeof address === "string") {
+    throw new Error("Unable to determine the dev server port.");
+  }
+  return address.port;
 }
 
 function sendJson(response: ServerResponse, status: number, payload: object): void {
