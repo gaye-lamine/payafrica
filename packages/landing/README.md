@@ -4,9 +4,22 @@ Landing page statique officielle du SDK PayAfrica.
 
 ## Lancer localement
 
+Installez les dépendances depuis ce dossier :
+
 ```bash
+npm install
 npm run preview
 ```
+
+La commande exacte `npm run preview` exécute `node server.mjs`. La landing est
+alors disponible sur [http://localhost:4173](http://localhost:4173) par défaut.
+
+## Déploiement
+
+Il n'existe aujourd'hui aucun déploiement automatisé ni hébergement public
+configuré pour cette landing. Elle est servie localement par `server.mjs` tant
+qu'une solution d'hébergement et un workflow de déploiement n'ont pas été
+ajoutés.
 
 ## Tests
 

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="PayAfrica SDK unifie Orange Money, Wave et MTN MoMo derrière une interface unique." />
+    <title>PayAfrica SDK — Paiements unifiés en Afrique</title>
+    <style>
+      :root { color-scheme: dark; --bg: #07111f; --panel: rgba(15, 28, 48, .72); --border: rgba(149, 171, 211, .16); --text: #f5f7ff; --muted: #a7b4cb; --indigo: #8b7cff; --emerald: #37e6b1; --cyan: #54caff; }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; min-width: 320px; color: var(--text); background: var(--bg); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      body::before { content: ""; position: fixed; inset: 0; z-index: -2; background: radial-gradient(circle at 16% 4%, rgba(82, 74, 218, .27), transparent 34rem), radial-gradient(circle at 86% 28%, rgba(14, 175, 156, .15), transparent 33rem), #07111f; }
+      body::after { content: ""; position: fixed; inset: 0; z-index: -1; opacity: .36; background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px); background-size: 46px 46px; mask-image: linear-gradient(to bottom, black, transparent 80%); }
+      a { color: inherit; text-decoration: none; }
+      .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+      nav { height: 78px; display: flex; align-items: center; justify-content: space-between; }
+      .brand { display: flex; align-items: center; gap: 10px; font-weight: 750; letter-spacing: -.03em; font-size: 18px; }
+      .brand-mark { width: 30px; height: 30px; border: 1px solid rgba(115, 215, 255, .65); border-radius: 10px; display: grid; place-items: center; background: linear-gradient(135deg, #816eff, #1de0b2); color: #06111e; font-size: 16px; }
+      .nav-links { display: flex; gap: 22px; color: var(--muted); font-size: 14px; }
+      .nav-links a:hover { color: var(--text); }
+      .nav-github { padding: 9px 13px; border: 1px solid var(--border); border-radius: 9px; font-size: 14px; }
+      .hero { padding: 105px 0 118px; text-align: center; }
+      .badge { display: inline-flex; align-items: center; padding: 7px 12px; margin-bottom: 28px; border: 1px solid rgba(107, 255, 204, .3); border-radius: 999px; background: rgba(36, 191, 151, .08); color: #a8ffdc; font-size: 13px; font-weight: 650; }
+      h1 { max-width: 930px; margin: 0 auto; font-size: clamp(43px, 7vw, 80px); letter-spacing: -.065em; line-height: 1.03; }
+      h1 span { background: linear-gradient(100deg, #ffffff 20%, #9993ff 57%, #59f0c4); background-clip: text; -webkit-background-clip: text; color: transparent; }
+      .hero-copy { max-width: 710px; margin: 26px auto 35px; color: var(--muted); font-size: clamp(17px, 2vw, 20px); line-height: 1.6; }
+      .actions { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; }
+      .button { border: 1px solid var(--border); border-radius: 10px; padding: 13px 18px; font-size: 14px; font-weight: 700; cursor: pointer; transition: transform .18s ease, border-color .18s ease, background .18s ease; }
+      .button:hover { transform: translateY(-2px); }
+      .button-primary { color: #05121c; border-color: transparent; background: linear-gradient(105deg, var(--emerald), var(--cyan)); box-shadow: 0 10px 35px rgba(48, 216, 177, .19); }
+      .button-secondary { background: rgba(12, 24, 42, .6); color: var(--text); }
+      .copy-hint { min-height: 20px; margin-top: 13px; color: #8cf3cf; font-size: 13px; }
+      .partner-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--border); box-shadow: 0 24px 70px rgba(0,0,0,.15); }
+      .partner { padding: 21px; background: rgba(9, 21, 37, .87); color: #c5cfdf; text-align: center; font-weight: 650; letter-spacing: .04em; }
+      .section { padding: 112px 0; }
+      .eyebrow { color: #7fdbff; font-weight: 750; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+      h2 { max-width: 680px; margin: 15px 0; font-size: clamp(32px, 4vw, 52px); line-height: 1.08; letter-spacing: -.05em; }
+      .section-copy { max-width: 620px; color: var(--muted); font-size: 17px; line-height: 1.65; }
+      .features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 44px; }
+      .feature { min-height: 225px; padding: 24px; border: 1px solid var(--border); border-radius: 15px; background: linear-gradient(145deg, rgba(23, 40, 68, .68), rgba(10, 21, 37, .74)); }
+      .feature-index { color: var(--emerald); font: 700 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .feature h3 { margin: 35px 0 10px; font-size: 18px; letter-spacing: -.025em; }
+      .feature p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+      .dx { display: grid; grid-template-columns: .86fr 1.14fr; gap: 42px; align-items: center; }
+      .terminal { position: relative; overflow: hidden; border: 1px solid rgba(122, 149, 193, .27); border-radius: 16px; background: #07101d; box-shadow: 0 24px 70px rgba(0,0,0,.3); }
+      .terminal::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(120deg, rgba(255,255,255,.05), transparent 25%); }
+      .terminal-bar { display: flex; align-items: center; gap: 7px; height: 45px; padding: 0 17px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,.025); }
+      .dot { width: 9px; height: 9px; border-radius: 99px; background: #ff7d7d; }.dot:nth-child(2){background:#efc965}.dot:nth-child(3){background:#65d6a6}
+      pre { margin: 0; padding: 28px; overflow: auto; color: #d9e4f7; font: 13px/1.78 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .purple { color: #baafff; }.green { color: #78edc4; }.blue { color: #76c9ff; }.muted { color: #71809d; }
+      .sandbox { margin-top: 24px; padding: 18px; border: 1px solid rgba(58, 228, 180, .2); border-radius: 12px; background: rgba(31, 171, 133, .07); }
+      .sandbox strong { display: block; margin-bottom: 4px; color: #aaffde; }.sandbox code { color: #eaf1ff; }
+      footer { display: flex; justify-content: space-between; gap: 30px; padding: 35px 0 48px; border-top: 1px solid var(--border); color: #8998b0; font-size: 14px; }
+      .footer-links { display: flex; flex-wrap: wrap; gap: 18px; }.footer-links a:hover { color: var(--text); }
+      @media (max-width: 780px) { .nav-links { display: none; } .hero { padding: 78px 0 78px; } .partner-row, .features, .dx { grid-template-columns: 1fr; } .section { padding: 74px 0; } .feature { min-height: 175px; } footer { flex-direction: column; } }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <nav>
+        <a class="brand" href="#top" aria-label="PayAfrica SDK"><span class="brand-mark">P</span>PayAfrica SDK</a>
+        <div class="nav-links"><a href="#features">Fonctionnalités</a><a href="#developers">Développeurs</a><a href="https://github.com/gaye-lamine/payafrica/blob/main/COMPATIBILITY.md">Documentation</a></div>
+        <a class="nav-github" href="https://github.com/gaye-lamine/payafrica">GitHub</a>
+      </nav>
+
+      <main id="top">
+        <section class="hero">
+          <!-- Mettre ce numéro à jour manuellement à chaque release tant qu'aucune CI dédiée ne déploie la landing. -->
+          <div class="badge">🚀 PayAfrica v2.0.0 is live</div>
+          <h1>Le SDK de paiement universel pour <span>l’Afrique de l’Ouest.</span></h1>
+          <p class="hero-copy">Unifiez Orange Money, Wave et MTN MoMo en une seule ligne de code. Multi-langage pour Node.js, PHP et Python.</p>
+          <div class="actions">
+            <button id="copy-command" class="button button-primary" type="button" data-command="npx @payafrica/cli init">Installer le CLI&nbsp; <code>npx @payafrica/cli init</code></button>
+            <a class="button button-secondary" href="https://github.com/gaye-lamine/payafrica">Voir sur GitHub</a>
+          </div>
+          <div id="copy-hint" class="copy-hint" aria-live="polite"></div>
+        </section>
+
+        <section class="partner-row" aria-label="Opérateurs pris en charge">
+          <div class="partner">ORANGE MONEY</div><div class="partner">WAVE</div><div class="partner">MTN MOMO</div>
+        </section>
+
+        <section id="features" class="section">
+          <div class="eyebrow">Une intégration, plusieurs réseaux</div>
+          <h2>La complexité des providers, enfin isolée.</h2>
+          <p class="section-copy">PayAfrica normalise les paiements, les statuts et les webhooks. Vos applications gardent une interface stable pendant que chaque adaptateur gère les spécificités de son opérateur.</p>
+          <div class="features">
+            <article class="feature"><div class="feature-index">01</div><h3>Multi-opérateurs</h3><p>Orange Money, Wave et MTN MoMo derrière un contrat de paiement commun.</p></article>
+            <article class="feature"><div class="feature-index">02</div><h3>CLI tout-en-un</h3><p>Initialisez, simulez, diagnostiquez et déclenchez vos webhooks avec <code>init</code>, <code>dev</code>, <code>doctor</code> et <code>trigger</code>.</p></article>
+            <article class="feature"><div class="feature-index">03</div><h3>HMAC-SHA256 natif</h3><p>Le body brut et la signature sont vérifiés avant tout traitement métier.</p></article>
+            <article class="feature"><div class="feature-index">04</div><h3>CI/CD validée</h3><p>Des suites de contrats exécutées sur Node.js, PHP et Python à chaque changement.</p></article>
+          </div>
+        </section>
+
+        <section id="developers" class="section dx">
+          <div>
+            <div class="eyebrow">Developer experience</div>
+            <h2>De la première ligne au premier paiement.</h2>
+            <p class="section-copy">Choisissez un provider, créez une session et traitez un événement normalisé. L’intégration reste lisible, typée et testable.</p>
+            <div class="sandbox"><strong>Sandbox locale intégrée</strong><code>payafrica dev</code> ouvre un checkout local et signe les webhooks de test automatiquement.</div>
+          </div>
+          <div class="terminal" aria-label="Exemple TypeScript"><div class="terminal-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="purple">const</span> payment = <span class="purple">new</span> <span class="blue">PayAfrica</span>(provider);
+
+<span class="purple">const</span> session = <span class="purple">await</span> payment.<span class="green">initiatePayment</span>({
+  amount: <span class="blue">15000</span>, currency: <span class="green">"XOF"</span>,
+  reference: <span class="green">"order_2048"</span>,
+});
+
+<span class="muted">// Webhook HTTP — conserver le body brut</span>
+<span class="purple">const</span> event = <span class="purple">await</span> payment.<span class="green">handleWebhook</span>(rawBody, headers);
+<span class="purple">if</span> (event.status === <span class="green">"success"</span>) fulfillOrder(event);</pre></div>
+        </section>
+      </main>
+
+      <footer>
+        <span>PayAfrica SDK — paiements mobiles sans fragmentation.</span>
+        <div class="footer-links"><a href="https://www.npmjs.com/package/@payafrica/core-node">npm</a><a href="https://pypi.org/project/payafrica-sdk/">PyPI</a><a href="https://packagist.org/packages/payafrica/core-php">Packagist</a><a href="https://github.com/gaye-lamine/payafrica">GitHub</a></div>
+      </footer>
+    </div>
+    <script>
+      const copyButton = document.getElementById("copy-command");
+      const copyHint = document.getElementById("copy-hint");
+      copyButton.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(copyButton.dataset.command);
+          copyHint.textContent = "Commande copiée. Lancez-la dans votre terminal.";
+        } catch {
+          copyHint.textContent = "Copiez la commande affichée dans le bouton.";
+        }
+      });
+    </script>
+  </body>
+</html>
