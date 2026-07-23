@@ -1,5 +1,13 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
+
+const configDirectory = dirname(fileURLToPath(import.meta.url));
+const coreNodePackage = JSON.parse(
+  readFileSync(resolve(configDirectory, "../core-node/package.json"), "utf8"),
+) as { version: string };
 
 const config: Config = {
   title: "PayAfrica",
@@ -41,6 +49,7 @@ const config: Config = {
       items: [
         { type: "docSidebar", sidebarId: "docs", position: "left", label: "Documentation" },
         { to: "/cli", label: "CLI", position: "left" },
+        { to: "/", label: `SDK v${coreNodePackage.version}`, position: "right" },
         { href: "https://github.com/gaye-lamine/payafrica", label: "GitHub", position: "right" },
       ],
     },
