@@ -69,6 +69,12 @@ La disponibilité effective dépend du contrat marchand et du pays activé aupr�
 
 Les identifiants, secrets, clés API et clés de webhook doivent uniquement être lus depuis les variables d'environnement. Ne les commitez jamais. Les handlers webhook doivent toujours transmettre le body HTTP brut et les headers au provider : la vérification de signature ou de clé doit être effectuée avant toute désérialisation ou mise à jour métier.
 
+## Compatibilité
+
+Consultez [COMPATIBILITY.md](COMPATIBILITY.md) pour les capacités par provider,
+la différence de validation `PaymentStatusResult` entre les SDK, et les limites
+du store d'idempotence par défaut.
+
 ## Contribution
 
 Pour ajouter un provider :
