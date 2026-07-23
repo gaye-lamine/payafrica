@@ -3,6 +3,9 @@ name = "payafrica-sdk"
 version = "2.0.0"
 description = "Unified West African mobile-money payment SDK."
 authors = ["PayAfrica Contributors"]
+homepage = "https://github.com/gaye-lamine/payafrica/tree/v2.0.0/packages/core-python"
+repository = "https://github.com/gaye-lamine/payafrica.git"
+documentation = "https://github.com/gaye-lamine/payafrica/tree/v2.0.0/packages/core-python"
 packages = [{ include = "payafrica" }]
 
 [tool.poetry.dependencies]

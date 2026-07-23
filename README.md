@@ -4,9 +4,9 @@ La couche d'abstraction de paiement unifiée pour l'Afrique de l'Ouest et Centra
 
 ![License MIT](https://img.shields.io/badge/license-MIT-111827)
 ![Build Status](https://img.shields.io/badge/build-local%20validation-0f766e)
-![npm](https://img.shields.io/badge/npm-not%20published-cc3534)
-![Packagist](https://img.shields.io/badge/Packagist-not%20published-f28d1a)
-![PyPI](https://img.shields.io/badge/PyPI-not%20published-3775a9)
+[![npm version](https://img.shields.io/npm/v/@payafrica/core-node?label=npm)](https://www.npmjs.com/package/@payafrica/core-node)
+[![Packagist version](https://img.shields.io/packagist/v/payafrica/core-php?label=Packagist)](https://packagist.org/packages/payafrica/core-php)
+[![PyPI version](https://img.shields.io/pypi/v/payafrica-sdk?label=PyPI)](https://pypi.org/project/payafrica-sdk/)
 
 ## Pourquoi PayAfrica ?
 
