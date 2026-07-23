@@ -8,11 +8,15 @@ La couche d'abstraction de paiement unifiée pour l'Afrique de l'Ouest et Centra
 [![Packagist version](https://img.shields.io/packagist/v/payafrica/core-php?label=Packagist)](https://packagist.org/packages/payafrica/core-php)
 [![PyPI version](https://img.shields.io/pypi/v/payafrica-sdk?label=PyPI)](https://pypi.org/project/payafrica-sdk/)
 
+La documentation publique est disponible sur [gaye-lamine.github.io/payafrica](https://gaye-lamine.github.io/payafrica/).
+
 ## Pourquoi PayAfrica ?
 
-Intégrer les moyens de paiement mobile impose habituellement de gérer une API par provider : des flux OAuth2 différents, des webhooks signés en HMAC ou validés par API key, des réponses asynchrones, et des formats d'erreurs incompatibles.
+Intégrer les moyens de paiement mobile impose habituellement de gérer une API par provider : des flux OAuth2 différents, des webhooks signés en HMAC ou validés par API key, des réponses asynchrones, et des formats d'erreurs incompatibles. PayAfrica fournit une interface unique, `PayAfrica`, au-dessus d'adaptateurs isolés.
 
-PayAfrica fournit une interface unique, `PayAfrica`, au-dessus d'adaptateurs isolés. Chaque intégration conserve les particularités de son provider, tandis que votre application utilise un contrat stable, des types stricts et une gestion d'erreurs normalisée. Aucune dépendance provider ne fuit dans la façade.
+- Les adaptateurs appellent directement les API Orange Money, Wave et MTN MoMo avec vos propres identifiants marchands. PayAfrica ne demande pas de compte auprès d'un intermédiaire ; un compte et un contrat avec l'opérateur choisi restent nécessaires.
+- Le SDK n'ajoute aucun frais d'intermédiaire aux transactions. Les frais applicables relèvent de la relation commerciale avec l'opérateur.
+- Le code est open source et le contrat est public dans [spec/provider-interface.md](spec/provider-interface.md). Les contributions sont ouvertes via le dépôt ; une gouvernance communautaire formalisée n'est pas encore publiée.
 
 ## Quickstart en 30 secondes
 

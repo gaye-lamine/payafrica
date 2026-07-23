@@ -12,3 +12,5 @@ __pycache__/
 .venv/
 *.egg-info/
 build/
+packages/docs/docs/compatibility.md
+packages/docs/.docusaurus/

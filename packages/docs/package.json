@@ -1,0 +1,30 @@
+{
+  "name": "@payafrica/docs",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "sync:content": "node scripts/sync-content.mjs",
+    "start": "npm run sync:content && docusaurus start",
+    "build": "npm run sync:content && docusaurus build",
+    "serve": "docusaurus serve",
+    "clear": "docusaurus clear",
+    "test": "npm run build"
+  },
+  "dependencies": {
+    "@docusaurus/core": "3.10.2",
+    "@docusaurus/preset-classic": "3.10.2",
+    "@mdx-js/react": "^3.1.0",
+    "clsx": "^2.1.1",
+    "prism-react-renderer": "^2.4.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@docusaurus/module-type-aliases": "3.10.2",
+    "@docusaurus/types": "3.10.2",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20.0"
+  }
+}
