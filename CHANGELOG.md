@@ -3,7 +3,7 @@
 Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
 
-## 3.0.0 — 2026-07-24
+## 3.0.2 — 2026-07-24
 
 ### Renaming, Rebranding & Versioning
 
@@ -15,7 +15,7 @@ fichier.
   - `@payafrica/docs` $\to$ `@waslpay/docs`.
   - `@payafrica/landing` $\to$ `@waslpay/landing`.
   - En-tête HTTP webhook générique $\to$ `x-waslpay-signature`.
-- **Alignement de version à 3.0.0** : Saut de version majeur délibéré pour l'ensemble des packages du monorepo afin d'éviter toute collision avec les tags Git `v1.0.0` et `v2.0.0` historiques de l'ancien projet PayAfrica.
+- **Alignement de version à 3.0.2** : Saut de version majeur délibéré pour l'ensemble des packages du monorepo afin d'éviter toute collision avec les tags Git `v1.0.0` et `v2.0.0` historiques de l'ancien projet PayAfrica.
 
 ## Unreleased
 
