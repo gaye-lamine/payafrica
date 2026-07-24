@@ -47,7 +47,7 @@ export async function devCommand(options: DevCommandOptions): Promise<void> {
 
   await listen(server, options.port);
   const port = getListeningPort(server);
-  console.log(`PayAfrica dev server listening on http://localhost:${port}`);
+  console.log(`WaslPay dev server listening on http://localhost:${port}`);
   console.log(`Webhook target: ${new URL(options.target).toString()}`);
   console.log(`Webhook HMAC secret: ${DEV_WEBHOOK_SECRET}`);
 }
@@ -112,11 +112,11 @@ function renderCheckout(response: ServerResponse, session: CheckoutSession | und
   const reference = session.reference === undefined ? "—" : escapeHtml(session.reference);
   sendHtml(response, 200, `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PayAfrica Dev Checkout</title><style>
+<title>WaslPay Dev Checkout</title><style>
 body{font-family:system-ui,sans-serif;max-width:640px;margin:64px auto;padding:0 24px;color:#172033}
 button{display:block;width:100%;padding:14px;margin:12px 0;border:0;border-radius:8px;font-size:16px;cursor:pointer}
 .success{background:#198754;color:white}.failure{background:#dc3545;color:white}.cancel{background:#5c6475;color:white}#result{min-height:24px}
-</style></head><body><h1>PayAfrica Dev Checkout</h1><p>Référence : <strong>${reference}</strong></p>
+</style></head><body><h1>WaslPay Dev Checkout</h1><p>Référence : <strong>${reference}</strong></p>
 <button class="success" data-result="success">✅ Simuler Paiement Réussi</button>
 <button class="failure" data-result="insufficient_funds">❌ Simuler Échec / Solde Insuffisant</button>
 <button class="cancel" data-result="cancelled">🚫 Simuler Annulation Utilisateur</button><p id="result"></p>
@@ -148,7 +148,7 @@ async function simulateCheckout(
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-payafrica-signature": `sha256=${signature}`,
+        "x-waslpay-signature": `sha256=${signature}`,
       },
       body: rawBody,
     });

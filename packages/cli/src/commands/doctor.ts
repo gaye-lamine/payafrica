@@ -46,7 +46,7 @@ export async function doctorCommand(): Promise<void> {
   const envPath = await findEnvFile();
   const checks: boolean[] = [];
 
-  console.log("PayAfrica doctor");
+  console.log("WaslPay doctor");
   console.log("");
 
   const nodeHealthy = getNodeMajorVersion(process.versions.node) >= 20;
@@ -70,7 +70,7 @@ export async function doctorCommand(): Promise<void> {
 
   if (detectedProviders.length === 0) {
     checks.push(false);
-    report(false, "Aucun provider PayAfrica détecté");
+    report(false, "Aucun provider WaslPay détecté");
   }
 
   for (const provider of detectedProviders) {
@@ -131,6 +131,6 @@ function report(ok: boolean, message: string): void {
 
 function finish(checks: readonly boolean[]): void {
   const healthy = checks.every(Boolean);
-  console.log(healthy ? "\nConfiguration PayAfrica valide." : "\nConfiguration PayAfrica incomplète.");
+  console.log(healthy ? "\nConfiguration WaslPay valide." : "\nConfiguration WaslPay incomplète.");
   if (!healthy) process.exitCode = 1;
 }

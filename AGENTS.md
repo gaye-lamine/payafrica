@@ -1,34 +1,34 @@
-# PayAfrica SDK — Instructions persistantes
+# WaslPay SDK — Instructions persistantes
 
 ## Vision du projet
 
-PayAfrica est un SDK open source unifié pour intégrer les paiements mobiles
+WaslPay est un SDK open source unifié pour intégrer les paiements mobiles
 ouest-africains derrière une interface unique. Les trois providers pris en
 charge sont Orange Money, Wave et MTN MoMo. Le SDK cible Node.js en premier,
-puis PHP dans un second temps.
+puis PHP et Python.
 
 ### Périmètre assumé : Free Money et Wizall exclus
 
 Free Money et Wizall n'exposent pas d'API directe dans le périmètre de ce SDK ;
 leur accès marchand passe par des agrégateurs tiers, par exemple PayDunya.
-PayAfrica choisit délibérément de ne pas les intégrer afin de préserver son
+WaslPay choisit délibérément de ne pas les intégrer afin de préserver son
 indépendance vis-à-vis d'intermédiaires commerciaux. Si un besoin réel émerge,
 ce sera une décision distincte, explicitement documentée — pas un provider
 « à venir » ni un oubli.
 
 ### Miroir PHP et Packagist
 
-Le package Composer porte le nom `payafrica/core-php`. Il doit être enregistré
-sur Packagist en pointant vers le dépôt miroir `gaye-lamine/payafrica-php`, et
+Le package Composer porte le nom `waslpay/core-php`. Il doit être enregistré
+sur Packagist en pointant vers le dépôt miroir `gaye-lamine/waslpay-php`, et
 non vers le monorepo principal. À chaque tag `v*`, le workflow de release
 extrait `packages/core-php` avec `git subtree split`, pousse ce contenu vers le
 miroir et y crée le même tag. Cette publication exige le secret de dépôt
-`PAYAFRICA_PHP_MIRROR_TOKEN` avec accès d'écriture au miroir.
+`WASLPAY_PHP_MIRROR_TOKEN` avec accès d'écriture au miroir.
 
 ## Architecture : règle absolue
 
 Aucune logique spécifique à un fournisseur ne doit fuiter dans la façade
-`PayAfrica`. Chaque fournisseur est un adaptateur isolé et doit implémenter
+`WaslPay`. Chaque fournisseur est un adaptateur isolé et doit implémenter
 exactement l'interface définie dans `spec/provider-interface.md`.
 
 Les adaptateurs implémentent exactement l'interface `PaymentProvider` définie
@@ -64,7 +64,7 @@ Les trois ports créent un `InMemoryWebhookEventStore` **une fois par instance
 de provider** lorsque l'intégrateur n'injecte pas explicitement de store. Il
 est donc partagé entre les appels `handleWebhook` d'une même instance Orange
 Money, Wave ou MTN MoMo, mais pas entre deux instances de provider, ni par la
-façade `PayAfrica`.
+façade `WaslPay`.
 
 - Node : `config.webhookEventStore ?? new InMemoryWebhookEventStore()` dans le
   constructeur du provider.

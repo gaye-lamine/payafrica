@@ -4,13 +4,13 @@ sidebar_position: 1
 
 # Sécuriser et gérer les webhooks
 
-Les webhooks permettent d'être notifié de manière asynchrone des changements de statut d'un paiement (ex. confirmation par le client ou échec). PayAfrica garantit la sécurité et l'idempotence de ces notifications à travers la méthode `handleWebhook`.
+Les webhooks permettent d'être notifié de manière asynchrone des changements de statut d'un paiement (ex. confirmation par le client ou échec). WaslPay garantit la sécurité et l'idempotence de ces notifications à travers la méthode `handleWebhook`.
 
 ## 1. Sécurité et vérification de signature HMAC
 
 Pour éviter les attaques par rejeu ou l'injection de faux événements, chaque opérateur signe ses webhooks (ex. header `x-wave-signature` pour Wave).
 
-**Règle d'or** : Transmettez toujours le **body HTTP brut** (`string` ou `Buffer`) et les headers entrants à `payAfrica.handleWebhook`. Ne parsez pas puis ne re-sérialisez pas le corps JSON dans votre middleware HTTP avant la vérification : la signature HMAC dépend des octets exacts reçus du réseau.
+**Règle d'or** : Transmettez toujours le **body HTTP brut** (`string` ou `Buffer`) et les headers entrants à `waslPay.handleWebhook`. Ne parsez pas puis ne re-sérialisez pas le corps JSON dans votre middleware HTTP avant la vérification : la signature HMAC dépend des octets exacts reçus du réseau.
 
 Si la signature est invalide ou absente, l'adaptateur lève une exception `PaymentError.Unknown` (ex. `"Invalid Wave webhook signature"`), rejetant ainsi la requête avant tout traitement métier.
 
@@ -21,7 +21,7 @@ Les opérateurs Mobile Money peuvent renvoyer le même événement webhook plusi
 - **Comportement par défaut** : Chaque instance de provider instancie un `InMemoryWebhookEventStore` local. Il déduplique les événements (basé sur l'ID d'événement) **uniquement pendant la durée de vie de cette instance**.
 - **Déploiements distribués et multi-workers** : Le store par défaut n'est pas partagé entre deux instances de provider ni conservé entre deux redémarrages. Dans un environnement de production (multi-processus, Kubernetes, Serverless), injectez un store persistant partagé (ex. basé sur Redis ou une base SQL) via l'option `webhookEventStore` du constructeur.
 
-Pour en savoir plus sur les spécificités d'idempotence selon les langages, consultez le guide [Compatibilité PayAfrica](../compatibility.md#idempotence-des-webhooks).
+Pour en savoir plus sur les spécificités d'idempotence selon les langages, consultez le guide [Compatibilité WaslPay](../compatibility.md#idempotence-des-webhooks).
 
 ## 3. Exemple d'intégration complet (Express / Node.js)
 
@@ -30,7 +30,7 @@ Voici un exemple exécutable de réception et de validation d'un webhook Wave en
 ```ts
 import { createHmac } from "node:crypto";
 import express from "express";
-import { PayAfrica, WaveProvider } from "@payafrica/core-node";
+import { WaslPay, WaveProvider } from "@waslpay/core-node";
 
 const app = express();
 
@@ -39,7 +39,7 @@ const provider = new WaveProvider({
   webhookSecret: process.env.WAVE_WEBHOOK_SECRET!,
   baseUrl: process.env.WAVE_BASE_URL, // http://127.0.0.1:4004/mock/wave en mode mock
 });
-const payAfrica = new PayAfrica(provider);
+const waslPay = new WaslPay(provider);
 
 // Utiliser express.raw pour capturer les octets bruts (Buffer/string)
 app.post(
@@ -48,7 +48,7 @@ app.post(
   async (req, res) => {
     try {
       // 1. handleWebhook valide la signature HMAC et déduplique l'événement
-      const event = await payAfrica.handleWebhook(req.body, req.headers);
+      const event = await waslPay.handleWebhook(req.body, req.headers);
 
       console.log(`[Webhook Reçu] Event ID: ${event.id}, Statut: ${event.status}`);
 
@@ -64,7 +64,7 @@ app.post(
 );
 ```
 
-### Sortie `PaymentEvent` réellement capturée contre `payafrica dev`
+### Sortie `PaymentEvent` réellement capturée contre `waslpay dev`
 
 Lorsque `handleWebhook` est appelé avec un payload et une signature HMAC SHA-256 valides pour une session créée (`wave_e37ba94b-4788-48ad-81be-7f1381a7e4df`), il retourne un objet `PaymentEvent` normalisé :
 

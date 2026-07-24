@@ -1,11 +1,11 @@
 {
-  "name": "payafrica-sdk",
+  "name": "waslpay-sdk",
   "private": true,
   "workspaces": [
     "packages/*",
     "packages/examples/*"
   ],
   "scripts": {
-    "test": "npm --workspace @payafrica/core-node test"
+    "test": "npm --workspace @waslpay/core-node test"
   }
 }

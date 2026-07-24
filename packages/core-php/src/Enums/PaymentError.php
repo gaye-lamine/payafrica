@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PayAfrica\Sdk\Enums;
+namespace WaslPay\Sdk\Enums;
 
 enum PaymentError: string
 {

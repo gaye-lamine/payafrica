@@ -1,6 +1,6 @@
-# PayAfrica Landing
+# WaslPay Landing
 
-Landing page statique officielle du SDK PayAfrica.
+Landing page statique officielle du SDK WaslPay.
 
 ## Lancer localement
 

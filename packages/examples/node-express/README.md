@@ -29,4 +29,4 @@ npm test
 ```
 
 Pour connecter un vrai provider Orange Money, Wave ou MTN MoMo, consultez le
-[README de `@payafrica/core-node`](../../core-node/README.md).
+[README de `@waslpay/core-node`](../../core-node/README.md).

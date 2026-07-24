@@ -31,7 +31,7 @@ jobs:
           node-version: 20.x
           cache: npm
       - run: npm ci
-      - run: npm --workspace @payafrica/docs run build
+      - run: npm --workspace @waslpay/docs run build
       - uses: actions/upload-pages-artifact@v3
         with:
           path: packages/docs/build

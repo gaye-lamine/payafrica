@@ -1,8 +1,8 @@
 {
-  "name": "@payafrica/landing",
-  "version": "2.0.0",
+  "name": "@waslpay/landing",
+  "version": "1.0.0",
   "private": true,
-  "description": "Official PayAfrica SDK landing page.",
+  "description": "Official WaslPay SDK landing page.",
   "scripts": {
     "build": "node -e \"console.log('Static landing page ready.')\"",
     "preview": "node server.mjs",

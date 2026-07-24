@@ -4,10 +4,10 @@ import httpx
 import respx
 import sys
 
-from payafrica.enums import PaymentError, PaymentStatus
-from payafrica.models import PaymentEvent, PaymentRequest
-from payafrica.providers.orange_money import OrangeMoneyProvider
-from payafrica.webhook_event_store import WebhookEventStore
+from waslpay.enums import PaymentError, PaymentStatus
+from waslpay.models import PaymentEvent, PaymentRequest
+from waslpay.providers.orange_money import OrangeMoneyProvider
+from waslpay.webhook_event_store import WebhookEventStore
 from tests.contract import ProviderContractTests
 
 

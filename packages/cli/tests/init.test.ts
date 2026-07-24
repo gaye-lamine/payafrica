@@ -32,7 +32,7 @@ afterEach(async () => {
 });
 
 async function useTemporaryDirectory(): Promise<string> {
-  temporaryDirectory = await mkdtemp(join(tmpdir(), "payafrica-cli-init-"));
+  temporaryDirectory = await mkdtemp(join(tmpdir(), "waslpay-cli-init-"));
   process.chdir(temporaryDirectory);
   return temporaryDirectory;
 }
@@ -47,10 +47,10 @@ describe("initCommand non-interactive flags", () => {
 
     await initCommand({ language, framework, providers });
 
-    const env = await readFile(join(directory, ".env.payafrica.example"), "utf8");
-    const integration = await readFile(join(directory, `payafrica-integration.${extension}`), "utf8");
+    const env = await readFile(join(directory, ".env.waslpay.example"), "utf8");
+    const integration = await readFile(join(directory, `waslpay-integration.${extension}`), "utf8");
 
-    expect(env).toContain("# PayAfrica SDK configuration");
+    expect(env).toContain("# WaslPay SDK configuration");
     expect(integration).toContain(expectedBoilerplate);
   });
 
@@ -77,7 +77,7 @@ describe("initCommand non-interactive flags", () => {
   it("generates mock credentials and local base URLs with --mock", async () => {
     const directory = await useTemporaryDirectory();
     await initCommand({ language: "node", framework: "express", providers: "orange-money,wave,mtn-momo", mock: true });
-    const env = await readFile(join(directory, ".env.payafrica.example"), "utf8");
+    const env = await readFile(join(directory, ".env.waslpay.example"), "utf8");
     expect(env).toContain("Mode test sans clés (--mock)");
     expect(env).toContain("ORANGE_MONEY_BASE_URL=http://localhost:4004/mock/orange");
     expect(env).toContain("WAVE_BASE_URL=http://localhost:4004/mock/wave");

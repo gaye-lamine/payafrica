@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Remboursements
 
-PayAfrica unifie la demande de remboursement à travers la méthode `payAfrica.refund(sessionId, amount)`. Cependant, les capacités de remboursement varient selon les API publiques des opérateurs.
+WaslPay unifie la demande de remboursement à travers la méthode `waslPay.refund(sessionId, amount)`. Cependant, les capacités de remboursement varient selon les API publiques des opérateurs.
 
 ## 1. Support par provider
 
@@ -12,7 +12,7 @@ PayAfrica unifie la demande de remboursement à travers la méthode `payAfrica.r
 - **MTN MoMo** : Prise en charge des remboursements totaux et partiels via l'API Collection (traitement potentiellement asynchrone).
 - **Orange Money** : **Non disponible**. L'API publique Orange Money eWallet n'expose pas de remboursement marchand automatique en self-service. Appeler `refund()` sur un provider Orange Money lève une erreur `OrangeMoneyProviderError`.
 
-Pour consulter la matrice complète et détaillée des capacités, référez-vous au document [Compatibilité PayAfrica](../compatibility.md#capacités-par-provider-identiques-dans-les-3-langages).
+Pour consulter la matrice complète et détaillée des capacités, référez-vous au document [Compatibilité WaslPay](../compatibility.md#capacités-par-provider-identiques-dans-les-3-langages).
 
 ## 2. Règles et limitations de remboursement
 
@@ -25,24 +25,24 @@ Pour consulter la matrice complète et détaillée des capacités, référez-vou
 Voici un exemple d'exécution d'un remboursement partiel de 500 XOF sur une session initiale :
 
 ```ts
-import { PayAfrica, WaveProvider } from "@payafrica/core-node";
+import { WaslPay, WaveProvider } from "@waslpay/core-node";
 
 const provider = new WaveProvider({
   apiKey: process.env.WAVE_API_KEY!,
   webhookSecret: process.env.WAVE_WEBHOOK_SECRET!,
   baseUrl: process.env.WAVE_BASE_URL,
 });
-const payAfrica = new PayAfrica(provider);
+const waslPay = new WaslPay(provider);
 
 const sessionId = "wave_2302a514-62f3-4f73-b85c-568938e3f083";
 
 // Remboursement partiel de 500 XOF
-const refund = await payAfrica.refund(sessionId, 500);
+const refund = await waslPay.refund(sessionId, 500);
 
 console.log("Résultat du remboursement:", refund);
 ```
 
-### Sortie `RefundResult` réellement capturée contre `payafrica dev`
+### Sortie `RefundResult` réellement capturée contre `waslpay dev`
 
 ```json
 {

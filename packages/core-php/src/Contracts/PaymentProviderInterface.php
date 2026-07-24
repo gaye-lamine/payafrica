@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace PayAfrica\Sdk\Contracts;
+namespace WaslPay\Sdk\Contracts;
 
-use PayAfrica\Sdk\DTO\PaymentEvent;
-use PayAfrica\Sdk\DTO\PaymentRequest;
-use PayAfrica\Sdk\DTO\PaymentSession;
-use PayAfrica\Sdk\DTO\PaymentStatusResult;
-use PayAfrica\Sdk\DTO\RefundResult;
+use WaslPay\Sdk\DTO\PaymentEvent;
+use WaslPay\Sdk\DTO\PaymentRequest;
+use WaslPay\Sdk\DTO\PaymentSession;
+use WaslPay\Sdk\DTO\PaymentStatusResult;
+use WaslPay\Sdk\DTO\RefundResult;
 
 interface PaymentProviderInterface
 {

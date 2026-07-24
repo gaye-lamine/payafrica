@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace PayAfrica\Sdk\Tests\Providers;
+namespace WaslPay\Sdk\Tests\Providers;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
-use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
-use PayAfrica\Sdk\Contracts\WebhookEventStoreInterface;
-use PayAfrica\Sdk\DTO\PaymentRequest;
-use PayAfrica\Sdk\Enums\PaymentStatus;
-use PayAfrica\Sdk\Enums\PaymentError;
-use PayAfrica\Sdk\Providers\OrangeMoneyProvider;
-use PayAfrica\Sdk\Tests\Contract\AbstractProviderContract;
+use WaslPay\Sdk\Contracts\PaymentProviderInterface;
+use WaslPay\Sdk\Contracts\WebhookEventStoreInterface;
+use WaslPay\Sdk\DTO\PaymentRequest;
+use WaslPay\Sdk\Enums\PaymentStatus;
+use WaslPay\Sdk\Enums\PaymentError;
+use WaslPay\Sdk\Providers\OrangeMoneyProvider;
+use WaslPay\Sdk\Tests\Contract\AbstractProviderContract;
 
 final class OrangeMoneyProviderTest extends AbstractProviderContract
 {

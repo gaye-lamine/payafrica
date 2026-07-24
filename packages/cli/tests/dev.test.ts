@@ -33,7 +33,7 @@ describe("parsePort", () => {
 
 describe("createDevServer", () => {
   it("creates a checkout session on an ephemeral port", async () => {
-    const server = createDevServer("http://127.0.0.1:65534/webhooks/payafrica");
+    const server = createDevServer("http://127.0.0.1:65534/webhooks/waslpay");
     servers.push(server);
     const port = await listenOnEphemeralPort(server);
 
@@ -63,7 +63,7 @@ describe("createDevServer", () => {
     servers.push(receiver);
     const receiverPort = await listenOnEphemeralPort(receiver);
 
-    const server = createDevServer(`http://127.0.0.1:${receiverPort}/webhooks/payafrica`);
+    const server = createDevServer(`http://127.0.0.1:${receiverPort}/webhooks/waslpay`);
     servers.push(server);
     const port = await listenOnEphemeralPort(server);
 
@@ -87,7 +87,7 @@ describe("createDevServer", () => {
     const expectedSignature = createHmac("sha256", "whsec_dev_12345").update(received.rawBody).digest("hex");
     const event = JSON.parse(received.rawBody) as { sessionId: string; status: string; reference?: string };
 
-    expect(received.headers["x-payafrica-signature"]).toBe(`sha256=${expectedSignature}`);
+    expect(received.headers["x-waslpay-signature"]).toBe(`sha256=${expectedSignature}`);
     expect(event).toMatchObject({ sessionId: checkout.id, status: "success", reference: "order-456" });
   });
 });

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PayAfrica\Sdk\DTO;
+namespace WaslPay\Sdk\DTO;
 
 final class PaymentRequest
 {

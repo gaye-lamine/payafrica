@@ -8,13 +8,13 @@ import { triggerCommand } from "./commands/trigger.js";
 const program = new Command();
 
 program
-  .name("payafrica")
-  .description("Generate a PayAfrica payment integration starter")
+  .name("waslpay")
+  .description("Generate a WaslPay payment integration starter")
   .version("1.0.3");
 
 program
   .command("init")
-  .description("Interactively generate PayAfrica configuration and integration code")
+  .description("Interactively generate WaslPay configuration and integration code")
   .option("--language <language>", "Backend language: node, php, or python")
   .option("--framework <framework>", "Framework compatible with the selected language")
   .option("--providers <providers>", "Comma-separated providers: orange-money, wave, mtn-momo")
@@ -23,20 +23,20 @@ program
 
 program
   .command("dev")
-  .description("Start the local PayAfrica checkout and webhook simulator")
+  .description("Start the local WaslPay checkout and webhook simulator")
   .option("-p, --port <number>", "Port for the local simulator", parsePort, 4004)
-  .option("-t, --target <url>", "Webhook receiver URL", "http://localhost:8000/api/webhooks/payafrica")
+  .option("-t, --target <url>", "Webhook receiver URL", "http://localhost:8000/api/webhooks/waslpay")
   .action(devCommand);
 
 program
   .command("doctor")
-  .description("Check local PayAfrica environment configuration")
+  .description("Check local WaslPay environment configuration")
   .action(doctorCommand);
 
 program
   .command("trigger <event>")
   .description("Send a signed, normalized test webhook event")
-  .option("-t, --target <url>", "Webhook receiver URL", "http://localhost:8000/api/webhooks/payafrica")
+  .option("-t, --target <url>", "Webhook receiver URL", "http://localhost:8000/api/webhooks/waslpay")
   .option("-s, --secret <secret>", "Webhook HMAC secret", "whsec_dev_12345")
   .action(triggerCommand);
 

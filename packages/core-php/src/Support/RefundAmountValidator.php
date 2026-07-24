@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace PayAfrica\Sdk\Support;
+namespace WaslPay\Sdk\Support;
 
-use PayAfrica\Sdk\Enums\PaymentError;
+use WaslPay\Sdk\Enums\PaymentError;
 
 final class RefundAmountValidator
 {

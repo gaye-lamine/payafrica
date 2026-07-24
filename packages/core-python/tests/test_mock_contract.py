@@ -6,10 +6,10 @@ import httpx
 import respx
 import pytest
 
-from payafrica.models import PaymentRequest
-from payafrica.providers.orange_money import OrangeMoneyProvider
-from payafrica.providers.wave import WaveProvider
-from payafrica.providers.mtn_momo import MtnMomoProvider
+from waslpay.models import PaymentRequest
+from waslpay.providers.orange_money import OrangeMoneyProvider
+from waslpay.providers.wave import WaveProvider
+from waslpay.providers.mtn_momo import MtnMomoProvider
 
 
 @pytest.mark.asyncio

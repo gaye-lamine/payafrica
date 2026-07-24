@@ -1,14 +1,14 @@
 {
-  "name": "@payafrica/core-node",
-  "version": "2.0.0",
+  "name": "@waslpay/core-node",
+  "version": "1.0.0",
   "type": "module",
-  "homepage": "https://github.com/gaye-lamine/payafrica/tree/v2.0.0/packages/core-node",
+  "homepage": "https://github.com/gaye-lamine/waslpay/tree/v2.0.0/packages/core-node",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gaye-lamine/payafrica.git",
+    "url": "git+https://github.com/gaye-lamine/waslpay.git",
     "directory": "packages/core-node"
   },
-  "documentation": "https://github.com/gaye-lamine/payafrica/tree/v2.0.0/packages/core-node",
+  "documentation": "https://github.com/gaye-lamine/waslpay/tree/v2.0.0/packages/core-node",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

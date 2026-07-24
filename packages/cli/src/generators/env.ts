@@ -27,7 +27,7 @@ const PROVIDER_ENV: Record<Provider, readonly string[]> = {
 };
 
 const MOCK_VALUES: Record<Provider, readonly string[]> = {
-  "orange-money": ["ORANGE_MONEY_CLIENT_ID=mock_orange_client", "ORANGE_MONEY_CLIENT_SECRET=mock_orange_secret", "ORANGE_MONEY_MERCHANT_CODE=mock_merchant", "ORANGE_MONEY_SITENAME=payafrica-dev", "ORANGE_MONEY_CALLBACK_URL=http://localhost:8000/api/webhooks/payafrica", "ORANGE_MONEY_WEBHOOK_API_KEY=mock_orange_webhook", "ORANGE_MONEY_ENVIRONMENT=sandbox", "ORANGE_MONEY_BASE_URL=http://localhost:4004/mock/orange"],
+  "orange-money": ["ORANGE_MONEY_CLIENT_ID=mock_orange_client", "ORANGE_MONEY_CLIENT_SECRET=mock_orange_secret", "ORANGE_MONEY_MERCHANT_CODE=mock_merchant", "ORANGE_MONEY_SITENAME=waslpay-dev", "ORANGE_MONEY_CALLBACK_URL=http://localhost:8000/api/webhooks/waslpay", "ORANGE_MONEY_WEBHOOK_API_KEY=mock_orange_webhook", "ORANGE_MONEY_ENVIRONMENT=sandbox", "ORANGE_MONEY_BASE_URL=http://localhost:4004/mock/orange"],
   wave: ["WAVE_API_KEY=mock_wave_key", "WAVE_WEBHOOK_SECRET=mock_wave_webhook", "WAVE_BASE_URL=http://localhost:4004/mock/wave"],
   "mtn-momo": ["MTN_MOMO_SUBSCRIPTION_KEY=mock_mtn_subscription", "MTN_MOMO_API_USER=00000000-0000-4000-8000-000000000001", "MTN_MOMO_API_KEY=mock_mtn_key", "MTN_MOMO_TARGET_ENVIRONMENT=sandbox", "MTN_MOMO_DEFAULT_CURRENCY=XOF", "MTN_MOMO_BASE_URL=http://localhost:4004/mock/mtn"],
 };
@@ -35,8 +35,8 @@ const MOCK_VALUES: Record<Provider, readonly string[]> = {
 export function generateEnvExample(providers: readonly Provider[], mock = false): string {
   if (mock) {
     const sections = providers.flatMap((provider) => [...MOCK_VALUES[provider], ""]);
-    return ["# Mode test sans clés (--mock). Lancez `payafrica dev` pour démarrer le serveur mock.", "# Pour passer en production, remplacez UNIQUEMENT ces valeurs par vos vraies clés et supprimez les lignes *_BASE_URL -- aucune modification de code n'est nécessaire.", "", ...sections].join("\n");
+    return ["# Mode test sans clés (--mock). Lancez `waslpay dev` pour démarrer le serveur mock.", "# Pour passer en production, remplacez UNIQUEMENT ces valeurs par vos vraies clés et supprimez les lignes *_BASE_URL -- aucune modification de code n'est nécessaire.", "", ...sections].join("\n");
   }
   const sections = providers.flatMap((provider) => [...PROVIDER_ENV[provider], ""]);
-  return ["# PayAfrica SDK configuration", "# Never commit actual secrets.", "", ...sections].join("\n");
+  return ["# WaslPay SDK configuration", "# Never commit actual secrets.", "", ...sections].join("\n");
 }

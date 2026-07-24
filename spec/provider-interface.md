@@ -1,17 +1,17 @@
 # Contrat des providers de paiement
 
-Ce document définit le contrat unique que doit respecter tout adaptateur de paiement PayAfrica : Orange Money, Wave et MTN MoMo.
+Ce document définit le contrat unique que doit respecter tout adaptateur de paiement WaslPay : Orange Money, Wave et MTN MoMo.
 
 ## Périmètre des providers
 
 Free Money et Wizall sont explicitement exclus : ils n'exposent pas d'API
-directe dans le périmètre de PayAfrica et passent par des agrégateurs tiers,
+directe dans le périmètre de WaslPay et passent par des agrégateurs tiers,
 par exemple PayDunya. Cette décision préserve l'indépendance du SDK vis-à-vis
 d'intermédiaires commerciaux. Leur éventuelle intégration future devra faire
 l'objet d'une décision distincte et documentée ; ils ne sont pas des providers
 « à venir » et leur absence n'est pas un oubli.
 
-La façade `PayAfrica` ne connaît que ce contrat. Elle ne doit jamais importer, exposer ni interpréter des champs, statuts, erreurs ou identifiants propres à un provider. Toute traduction entre ce contrat et l'API distante appartient exclusivement à l'adaptateur concerné.
+La façade `WaslPay` ne connaît que ce contrat. Elle ne doit jamais importer, exposer ni interpréter des champs, statuts, erreurs ou identifiants propres à un provider. Toute traduction entre ce contrat et l'API distante appartient exclusivement à l'adaptateur concerné.
 
 ## Note de version
 
@@ -94,7 +94,7 @@ export type PaymentStatusResult =
 export interface PaymentEvent {
   /** Identifiant unique de l'événement, utilisé pour l'idempotence. */
   id: string;
-  /** Identifiant de la session PayAfrica concernée. */
+  /** Identifiant de la session WaslPay concernée. */
   sessionId: string;
   /** État de paiement résultant de l'événement. */
   status: PaymentStatus;
@@ -136,7 +136,7 @@ export enum PaymentError {
 
 `handleWebhook` reçoit le body HTTP brut exact (`rawBody`) et tous les en-têtes HTTP entrants (`headers`). Il extrait dans l'adaptateur l'en-tête de signature propre au provider, puis vérifie la signature sur `rawBody` avant toute désérialisation. `rawBody` doit être transmis sans transformation, y compris ses espaces et son encodage; l'adaptateur ne doit jamais parser puis re-sérialiser le payload avant sa vérification. Les clés de `headers` doivent être traitées sans distinction de casse. Pour une signature absente, invalide ou non vérifiable, il doit rejeter la promesse, ne produire aucun événement et ne déclencher aucune mise à jour métier. Les livraisons répétées du même `PaymentEvent.id` doivent produire le même résultat sans effet de bord supplémentaire côté intégration.
 
-`refund` demande le remboursement d'un paiement confirmé. Si `amount` est absent, le remboursement porte sur le montant total encore remboursable. S'il est présent, il doit être strictement positif, exprimé en unités mineures et ne pas dépasser ce montant. Un provider dont le remboursement est asynchrone retourne `pending`; sinon `success` ou `failed`. Si une API provider ne permet pas le remboursement partiel, elle doit rejeter une valeur `amount` inférieure au solde remboursable plutôt que de rembourser un montant différent.
+`refund` demande le remboursement d'un paiement confirmé. Si `amount` est absent, le remboursement porte sur le montant total encore remboursable. S'il est présent, il doit être strictly positif, exprimé en unités mineures et ne pas dépasser ce montant. Un provider dont le remboursement est asynchrone retourne `pending`; sinon `success` ou `failed`. Si une API provider ne permet pas le remboursement partiel, elle doit rejeter une valeur `amount` inférieure au solde remboursable plutôt que de rembourser un montant différent.
 
 ### Support actuel de `expired`
 

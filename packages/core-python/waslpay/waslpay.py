@@ -4,7 +4,7 @@ from .contracts import PaymentProvider, WebhookHeaders
 from .models import PaymentEvent, PaymentRequest, PaymentSession, PaymentStatusResult, RefundResult
 
 
-class PayAfrica:
+class WaslPay:
     def __init__(self, provider: PaymentProvider) -> None:
         self._provider = provider
 

@@ -1,15 +1,15 @@
 {
-  "name": "@payafrica/cli",
-  "version": "2.0.0",
-  "description": "Interactive PayAfrica integration generator.",
+  "name": "@waslpay/cli",
+  "version": "1.0.0",
+  "description": "Interactive WaslPay integration generator.",
   "type": "module",
   "bin": {
-    "payafrica": "./bin/payafrica.js"
+    "waslpay": "./bin/waslpay.js"
   },
   "files": ["bin", "dist"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "start": "node bin/payafrica.js",
+    "start": "node bin/waslpay.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },

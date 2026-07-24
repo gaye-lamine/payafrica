@@ -1,6 +1,6 @@
 import express, { type Express, type Request, type Response } from "express";
 
-import { PayAfrica } from "@payafrica/core-node";
+import { WaslPay } from "@waslpay/core-node";
 
 import { FakePaymentProvider, FakePaymentProviderError } from "./fake-provider.js";
 
@@ -27,12 +27,12 @@ export function createApp(options: CreateAppOptions = {}): Express {
     webhookSecret: options.webhookSecret ?? DEMO_WEBHOOK_SECRET,
     ...(options.successDelayMs === undefined ? {} : { successDelayMs: options.successDelayMs }),
   });
-  const payAfrica = new PayAfrica(provider);
+  const waslPay = new WaslPay(provider);
   const app = express();
 
-  app.post("/webhooks/payafrica", express.raw({ type: "application/json" }), async (request, response) => {
+  app.post("/webhooks/waslpay", express.raw({ type: "application/json" }), async (request, response) => {
     try {
-      const event = await payAfrica.handleWebhook(
+      const event = await waslPay.handleWebhook(
         request.body as Buffer,
         request.headers as Record<string, string | string[] | undefined>
       );
@@ -55,7 +55,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
         response.status(400).json({ error: "currency and reference are required strings" });
         return;
       }
-      const session = await payAfrica.initiatePayment({
+      const session = await waslPay.initiatePayment({
         amount: body.amount,
         currency: body.currency,
         reference: body.reference,
@@ -69,7 +69,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
 
   app.get("/checkout/:id/status", async (request, response) => {
     try {
-      response.status(200).json(await payAfrica.checkStatus(request.params.id));
+      response.status(200).json(await waslPay.checkStatus(request.params.id));
     } catch (error) {
       sendError(response, error);
     }
@@ -78,7 +78,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
   app.post("/refund/:id", async (request: Request<{ id: string }, unknown, RefundBody>, response) => {
     try {
       const amount = request.body.amount;
-      const refund = await payAfrica.refund(request.params.id, amount as number | undefined);
+      const refund = await waslPay.refund(request.params.id, amount as number | undefined);
       response.status(200).json(refund);
     } catch (error) {
       sendError(response, error);
@@ -99,7 +99,7 @@ function sendError(response: Response, error: unknown): void {
 if (import.meta.url === `file:///${process.argv[1]?.replaceAll("\\", "/")}`) {
   const port = Number.parseInt(process.env.PORT ?? "3000", 10);
   createApp().listen(port, () => {
-    console.log(`PayAfrica fake-provider demo listening on http://localhost:${port}`);
+    console.log(`WaslPay fake-provider demo listening on http://localhost:${port}`);
     console.log(`Webhook HMAC secret: ${DEMO_WEBHOOK_SECRET}`);
   });
 }

@@ -1,4 +1,4 @@
-export { PayAfrica } from "./PayAfrica.js";
+export { WaslPay } from "./WaslPay.js";
 export {
   InMemoryWebhookEventStore,
   type WebhookEventStore,

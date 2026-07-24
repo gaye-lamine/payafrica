@@ -1,4 +1,4 @@
-# Compatibilité PayAfrica
+# Compatibilité WaslPay
 
 Ce document décrit les capacités publiques communes aux SDK Node.js, PHP et
 Python, ainsi que la différence de comportement connue entre leurs runtimes.

@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace PayAfrica\Sdk\Tests\Providers;
+namespace WaslPay\Sdk\Tests\Providers;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
-use PayAfrica\Sdk\DTO\PaymentRequest;
-use PayAfrica\Sdk\Providers\MtnMomoProvider;
-use PayAfrica\Sdk\Providers\OrangeMoneyProvider;
-use PayAfrica\Sdk\Providers\WaveProvider;
+use WaslPay\Sdk\DTO\PaymentRequest;
+use WaslPay\Sdk\Providers\MtnMomoProvider;
+use WaslPay\Sdk\Providers\OrangeMoneyProvider;
+use WaslPay\Sdk\Providers\WaveProvider;
 use PHPUnit\Framework\TestCase;
 
 final class ProviderMockContractTest extends TestCase

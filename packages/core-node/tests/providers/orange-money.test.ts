@@ -12,7 +12,7 @@ function createProvider(webhookEventStore?: WebhookEventStore): OrangeMoneyProvi
     clientId: "test-client-id",
     clientSecret: "test-client-secret",
     merchantCode: "test-merchant",
-    sitename: "PayAfrica contract tests",
+    sitename: "WaslPay contract tests",
     environment: "sandbox",
     callbackUrl: "https://merchant.example.test/orange/callback",
     webhookApiKey: WEBHOOK_API_KEY,

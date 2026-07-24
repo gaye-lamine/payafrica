@@ -47,7 +47,7 @@ export async function initCommand(options: InitCommandOptions = {}): Promise<voi
     return;
   }
 
-  intro(pc.bgCyan(pc.black(" Welcome to PayAfrica SDK Generator 🌍 ")));
+  intro(pc.bgCyan(pc.black(" Welcome to WaslPay SDK Generator 🌍 ")));
 
   const language = exitOnCancel(
     await select<Language>({
@@ -75,10 +75,10 @@ export async function initCommand(options: InitCommandOptions = {}): Promise<voi
 
   const mock = exitOnCancel(await select<boolean>({ message: "Mode test sans clés ?", options: [{ value: true, label: "Oui — utiliser le mock local" }, { value: false, label: "Non — configurer les API opérateur" }] }));
   const task = spinner();
-  task.start("Generating PayAfrica integration files");
+  task.start("Generating WaslPay integration files");
   await generateFiles({ language, framework, providers, mock });
-  task.stop("PayAfrica files generated");
-  outro("Review .env.payafrica.example, add your credentials locally, then wire the selected provider into your application.");
+  task.stop("WaslPay files generated");
+  outro("Review .env.waslpay.example, add your credentials locally, then wire the selected provider into your application.");
 }
 
 function parseNonInteractiveOptions(options: InitCommandOptions): InitConfiguration | undefined {
@@ -121,8 +121,8 @@ async function generateFiles(configuration: InitConfiguration): Promise<void> {
   const extension = configuration.language === "node" ? "ts" : configuration.language === "php" ? "php" : "py";
   const boilerplate = createBoilerplate(configuration.language, configuration.framework, configuration.providers);
   await Promise.all([
-    writeFile(resolve(cwd, ".env.payafrica.example"), generateEnvExample(configuration.providers, configuration.mock), "utf8"),
-    writeFile(resolve(cwd, `payafrica-integration.${extension}`), boilerplate, "utf8"),
+    writeFile(resolve(cwd, ".env.waslpay.example"), generateEnvExample(configuration.providers, configuration.mock), "utf8"),
+    writeFile(resolve(cwd, `waslpay-integration.${extension}`), boilerplate, "utf8"),
   ]);
 }
 

@@ -41,7 +41,7 @@ contenir `reference` et `error`. `RefundResult` contient `sessionId`,
 ## Créer une session
 
 ```ts
-const session = await payAfrica.initiatePayment({
+const session = await waslPay.initiatePayment({
   amount: 1_000,
   currency: "XOF",
   reference: "order-123",
@@ -56,7 +56,7 @@ console.log(session.id, session.status, session.paymentUrl);
 ## Vérifier un statut
 
 ```ts
-const result = await payAfrica.checkStatus(session.id);
+const result = await waslPay.checkStatus(session.id);
 
 if (result.status === "failed") {
   console.error(result.error);
@@ -68,8 +68,8 @@ if (result.status === "failed") {
 ## Traiter un webhook
 
 ```ts
-app.post("/webhooks/payafrica", express.raw({ type: "application/json" }), async (req, res) => {
-  const event = await payAfrica.handleWebhook(req.body, req.headers);
+app.post("/webhooks/waslpay", express.raw({ type: "application/json" }), async (req, res) => {
+  const event = await waslPay.handleWebhook(req.body, req.headers);
   res.status(200).json({ eventId: event.id, status: event.status });
 });
 ```
@@ -80,12 +80,12 @@ désérialisation : le provider vérifie sa signature ou sa clé de sécurité.
 ## Demander un remboursement
 
 ```ts
-const refund = await payAfrica.refund(session.id, 500);
+const refund = await waslPay.refund(session.id, 500);
 console.log(refund.refundId, refund.amount, refund.status);
 
 // Omettre amount demande un remboursement total.
-const fullRefund = await payAfrica.refund(session.id);
+const fullRefund = await waslPay.refund(session.id);
 ```
 
 La spécification complète et normative est disponible dans
-[provider-interface.md](https://github.com/gaye-lamine/payafrica/blob/main/spec/provider-interface.md).
+[provider-interface.md](https://github.com/gaye-lamine/waslpay/blob/main/spec/provider-interface.md).

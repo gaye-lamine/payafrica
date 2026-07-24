@@ -3,9 +3,9 @@ sidebar_position: 1
 slug: /
 ---
 
-# PayAfrica SDK
+# WaslPay SDK
 
-PayAfrica est un SDK unifié et open source permettant d'intégrer les paiements mobile money en Afrique de l'Ouest (Orange Money, Wave et MTN MoMo) à travers une API standardisée pour **Node.js**, **PHP** et **Python**.
+WaslPay est un SDK unifié et open source permettant d'intégrer les paiements mobile money en Afrique de l'Ouest (Orange Money, Wave et MTN MoMo) à travers une API standardisée pour **Node.js**, **PHP** et **Python**.
 
 ## Le problème résolu : la fragmentation du Mobile Money
 
@@ -15,7 +15,7 @@ Pour un marchand ou une équipe de développement, accepter plusieurs moyens de 
 - D'écrire et maintenir autant d'adaptateurs sur mesure qu'il y a d'opérateurs.
 - Ou de s'en remettre à des agrégateurs commerciaux tiers imposant des frais d'intermédiaire et une dépendance technique.
 
-**PayAfrica résout cette fragmentation** en agissant comme une couche d'abstraction unique et agnostique. Chaque fournisseur est encapsulé dans un adaptateur strict qui implémente le contrat universel `PaymentProvider`. Vos applications dialoguent avec la façade `PayAfrica` et manipulent des objets normalisés quel que soit l'opérateur sous-jacent.
+**WaslPay résout cette fragmentation** en agissant comme une couche d'abstraction unique et agnostique. Chaque fournisseur est encapsulé dans un adaptateur strict qui implémente le contrat universel `PaymentProvider`. Vos applications dialoguent avec la façade `WaslPay` et manipulent des objets normalisés quel que soit l'opérateur sous-jacent.
 
 ## Providers et langages supportés
 
@@ -24,14 +24,14 @@ Pour un marchand ou une équipe de développement, accepter plusieurs moyens de 
 - **Wave** : Paiements et remboursements via l'API Wave Checkout.
 - **MTN MoMo** : Collection de paiements et remboursements via l'API Collection.
 
-*(Remarque : Free Money et Wizall ne disposant pas d'API directes sans passer par un agrégateur tiers, ils sont délibérément exclus du périmètre de PayAfrica afin de préserver l'indépendance vis-à-vis d'intermédiaires).*
+*(Remarque : Free Money et Wizall ne disposant pas d'API directes sans passer par un agrégateur tiers, ils sont délibérément exclus du périmètre de WaslPay afin de préserver l'indépendance vis-à-vis d'intermédiaires).*
 
 Consultez le document [Compatibilité et capacités par provider](compatibility.md) pour découvrir le détail des fonctionnalités prises en charge par chaque opérateur (gestion du statut `expired`, remboursements totaux/partiels, etc.).
 
 ### 3 Runtimes et SDKs officiels
-- **Node.js / TypeScript** (`@payafrica/core-node`)
-- **PHP** (`payafrica/core-php`)
-- **Python** (`payafrica-python`)
+- **Node.js / TypeScript** (`@waslpay/core-node`)
+- **PHP** (`waslpay/core-php`)
+- **Python** (`waslpay-python`)
 
 Toutes les implémentations garantissent le même contrat d'interface, la même validation stricte des statuts (`PaymentStatusResult`), et la même déduplication d'événements via `WebhookEventStore`.
 
@@ -43,4 +43,4 @@ Voici comment est structuré ce portail de documentation :
 - **[Guides](guides/webhooks.md)** : Apprenez à sécuriser la réception des webhooks (vérification de signature HMAC, déduplication et idempotence) et à gérer les demandes de remboursement.
 - **[Providers](providers/capabilities.md)** : Examinez la matrice comparative des capacités de chaque opérateur pour adapter le parcours utilisateur de votre application.
 - **[Référence](reference/contract.md)** : Consultez les spécifications détaillées de l'interface `PaymentProvider`, de l'union discriminée `PaymentStatusResult` et de l'énumération d'erreurs `PaymentError`.
-- **[CLI](cli.md)** : Découvrez l'outil en ligne de commande `@payafrica/cli` pour échafauder vos projets et lancer le serveur de mock local sans clé API de production.
+- **[CLI](cli.md)** : Découvrez l'outil en ligne de commande `@waslpay/cli` pour échafauder vos projets et lancer le serveur de mock local sans clé API de production.

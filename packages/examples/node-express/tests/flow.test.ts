@@ -3,7 +3,7 @@ import { createHmac } from "node:crypto";
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { PaymentError, PaymentStatus } from "@payafrica/core-node";
+import { PaymentError, PaymentStatus } from "@waslpay/core-node";
 
 import { DEMO_WEBHOOK_SECRET, createApp } from "../src/server.js";
 
@@ -47,9 +47,9 @@ describe("Node Express fake-provider flow", () => {
     const webhookPayload = createWebhookPayload();
     const signature = createHmac("sha256", DEMO_WEBHOOK_SECRET).update(webhookPayload).digest("hex");
     const webhook = await request(app)
-      .post("/webhooks/payafrica")
+      .post("/webhooks/waslpay")
       .set("content-type", "application/json")
-      .set("x-payafrica-signature", signature)
+      .set("x-waslpay-signature", signature)
       .send(webhookPayload)
       .expect(200);
     expect(webhook.body).toMatchObject({
@@ -61,12 +61,12 @@ describe("Node Express fake-provider flow", () => {
   it("rejects a webhook with an invalid HMAC signature", async () => {
     const webhookPayload = createWebhookPayload();
     await request(app)
-      .post("/webhooks/payafrica")
+      .post("/webhooks/waslpay")
       .set("content-type", "application/json")
-      .set("x-payafrica-signature", "not-a-valid-signature")
+      .set("x-waslpay-signature", "not-a-valid-signature")
       .send(webhookPayload)
       .expect(400)
-      .expect({ error: PaymentError.Unknown, message: "Invalid PayAfrica webhook signature" });
+      .expect({ error: PaymentError.Unknown, message: "Invalid WaslPay webhook signature" });
   });
 
   it("rejects a refund with a negative amount", async () => {

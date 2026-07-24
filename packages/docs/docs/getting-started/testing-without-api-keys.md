@@ -7,7 +7,7 @@ sidebar_position: 2
 Vous pouvez développer le flux de paiement avant d'obtenir des clés sandbox ou de
 production. Le mode mock appelle les vraies classes `WaveProvider`,
 `OrangeMoneyProvider` et `MtnMomoProvider`, mais redirige leurs requêtes HTTP vers
-`payafrica dev` localement. Lorsque vous passez en production, le code applicatif
+`waslpay dev` localement. Lorsque vous passez en production, le code applicatif
 reste inchangé : seules les valeurs de votre fichier d'environnement changent.
 
 Les exemples ci-dessous utilisent Wave. Orange Money et MTN MoMo suivent le même
@@ -19,13 +19,13 @@ Générez d'abord l'intégration et les variables de démonstration. Les trois o
 de sélection sont requises ensemble en mode non interactif :
 
 ```bash
-npx @payafrica/cli init --language node --framework express --providers wave --mock
+npx @waslpay/cli init --language node --framework express --providers wave --mock
 ```
 
-Le fichier `.env.payafrica.example` créé contient notamment :
+Le fichier `.env.waslpay.example` créé contient notamment :
 
 ```dotenv
-# Mode test sans clés (--mock). Lancez `payafrica dev` pour démarrer le serveur mock.
+# Mode test sans clés (--mock). Lancez `waslpay dev` pour démarrer le serveur mock.
 # Pour passer en production, remplacez UNIQUEMENT ces valeurs par vos vraies clés et supprimez les lignes *_BASE_URL -- aucune modification de code n'est nécessaire.
 WAVE_API_KEY=mock_wave_key
 WAVE_WEBHOOK_SECRET=mock_wave_webhook
@@ -35,7 +35,7 @@ WAVE_BASE_URL=http://localhost:4004/mock/wave
 Dans un second terminal, démarrez le serveur local :
 
 ```bash
-npx @payafrica/cli dev --port 4004
+npx @waslpay/cli dev --port 4004
 ```
 
 Laissez ce processus actif pendant les exemples qui suivent.
@@ -47,7 +47,7 @@ variable n'est pas définie, le provider reprend automatiquement l'URL réelle d
 Wave.
 
 ```ts
-import { WaveProvider } from "@payafrica/core-node";
+import { WaveProvider } from "@waslpay/core-node";
 
 const provider = new WaveProvider({
   apiKey: process.env.WAVE_API_KEY!,
@@ -96,8 +96,8 @@ Le dernier argument du constructeur est l'override facultatif de l'URL de base.
 declare(strict_types=1);
 
 use GuzzleHttp\Client;
-use PayAfrica\Sdk\DTO\PaymentRequest;
-use PayAfrica\Sdk\Providers\WaveProvider;
+use WaslPay\Sdk\DTO\PaymentRequest;
+use WaslPay\Sdk\Providers\WaveProvider;
 
 $provider = new WaveProvider(
     new Client(),
@@ -145,8 +145,8 @@ import os
 
 import httpx
 
-from payafrica.models import PaymentRequest
-from payafrica.providers import WaveProvider
+from waslpay.models import PaymentRequest
+from waslpay.providers import WaveProvider
 
 
 async def main() -> None:

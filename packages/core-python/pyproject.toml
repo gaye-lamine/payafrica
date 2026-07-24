@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "payafrica-sdk"
-version = "2.0.0"
+name = "waslpay-sdk"
+version = "1.0.0"
 description = "Unified West African mobile-money payment SDK."
-authors = ["PayAfrica Contributors"]
-homepage = "https://github.com/gaye-lamine/payafrica/tree/v2.0.0/packages/core-python"
-repository = "https://github.com/gaye-lamine/payafrica.git"
-documentation = "https://github.com/gaye-lamine/payafrica/tree/v2.0.0/packages/core-python"
-packages = [{ include = "payafrica" }]
+authors = ["WaslPay Contributors"]
+homepage = "https://github.com/gaye-lamine/waslpay/tree/v2.0.0/packages/core-python"
+repository = "https://github.com/gaye-lamine/waslpay.git"
+documentation = "https://github.com/gaye-lamine/waslpay/tree/v2.0.0/packages/core-python"
+packages = [{ include = "waslpay" }]
 
 [tool.poetry.dependencies]
 python = ">=3.10"

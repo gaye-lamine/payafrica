@@ -8,7 +8,7 @@ import type {
   RefundResult,
 } from "./types.js";
 
-export class PayAfrica {
+export class WaslPay {
   public constructor(private readonly provider: PaymentProvider) {}
 
   public initiatePayment(params: PaymentRequest): Promise<PaymentSession> {

@@ -13,7 +13,7 @@ afterEach(async () => {
   })));
 });
 
-describe("payafrica dev provider API mocks", () => {
+describe("waslpay dev provider API mocks", () => {
   it("runs the real Orange Money provider against the local mock", async () => {
     const baseUrl = await mockBase("orange");
     const provider = new OrangeMoneyProvider({ clientId: "mock", clientSecret: "mock", merchantCode: "mock", sitename: "mock", callbackUrl: "http://localhost/callback", webhookApiKey: "mock", environment: "sandbox", baseUrl });

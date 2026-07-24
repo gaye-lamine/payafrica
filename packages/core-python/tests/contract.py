@@ -7,11 +7,11 @@ import httpx
 import pytest
 import respx
 
-from payafrica.contracts import PaymentProvider, WebhookHeaders
-from payafrica.enums import PaymentError, PaymentStatus
-from payafrica.errors import ProviderError
-from payafrica.models import PaymentEvent, PaymentRequest
-from payafrica.webhook_event_store import WebhookEventStore
+from waslpay.contracts import PaymentProvider, WebhookHeaders
+from waslpay.enums import PaymentError, PaymentStatus
+from waslpay.errors import ProviderError
+from waslpay.models import PaymentEvent, PaymentRequest
+from waslpay.webhook_event_store import WebhookEventStore
 
 
 class SpyWebhookEventStore(WebhookEventStore):

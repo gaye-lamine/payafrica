@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace PayAfrica\Sdk\Support;
+namespace WaslPay\Sdk\Support;
 
-use PayAfrica\Sdk\Contracts\WebhookEventStoreInterface;
-use PayAfrica\Sdk\DTO\PaymentEvent;
+use WaslPay\Sdk\Contracts\WebhookEventStoreInterface;
+use WaslPay\Sdk\DTO\PaymentEvent;
 
 final class InMemoryWebhookEventStore implements WebhookEventStoreInterface
 {

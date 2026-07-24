@@ -1,13 +1,13 @@
-# PayAfrica Core Python
+# WaslPay Core Python
 
 SDK Python 3.10+ asynchrone, avec modèles Pydantic v2 immuables et HTTPX.
 
 ## Installation
 
 ```bash
-pip install payafrica-sdk
+pip install waslpay-sdk
 # ou
-poetry add payafrica-sdk
+poetry add waslpay-sdk
 ```
 
 Pour développer ce package :
@@ -24,8 +24,8 @@ Injectez un `httpx.AsyncClient` dans le provider choisi.
 import os
 import httpx
 
-from payafrica import PayAfrica
-from payafrica.providers import WaveProvider
+from waslpay import WaslPay
+from waslpay.providers import WaveProvider
 
 client = httpx.AsyncClient()
 provider = WaveProvider(
@@ -33,7 +33,7 @@ provider = WaveProvider(
     api_key=os.environ["WAVE_API_KEY"],
     webhook_secret=os.environ["WAVE_WEBHOOK_SECRET"],
 )
-payafrica = PayAfrica(provider)
+waslpay = WaslPay(provider)
 ```
 
 Variables `.env` :
@@ -59,12 +59,12 @@ MTN_MOMO_DEFAULT_CURRENCY=XOF
 
 ```python
 from fastapi import FastAPI, Request
-from payafrica import PaymentRequest
+from waslpay import PaymentRequest
 
 app = FastAPI()
 
 # 1. Créer une session.
-session = await payafrica.initiate_payment(PaymentRequest(
+session = await waslpay.initiate_payment(PaymentRequest(
     amount=1000,
     currency="XOF",
     reference="order-123",
@@ -74,7 +74,7 @@ session = await payafrica.initiate_payment(PaymentRequest(
 ))
 
 # 2. Vérifier le statut.
-status_result = await payafrica.check_status(session.id)
+status_result = await waslpay.check_status(session.id)
 if status_result.status is PaymentStatus.FAILED:
     error = status_result.error
 
@@ -82,11 +82,11 @@ if status_result.status is PaymentStatus.FAILED:
 @app.post("/webhooks/payments")
 async def webhook(request: Request) -> dict[str, str]:
     raw_body = await request.body()
-    event = await payafrica.handle_webhook(raw_body, dict(request.headers))
+    event = await waslpay.handle_webhook(raw_body, dict(request.headers))
     return {"event_id": event.id}
 
 # 4. Rembourser. Orange Money lève NotImplementedError.
-refund = await payafrica.refund(session.id, 500)
+refund = await waslpay.refund(session.id, 500)
 ```
 
 Fermez le client HTTPX au cycle de vie de votre application avec `await client.aclose()`.
@@ -105,7 +105,7 @@ Les adaptateurs lèvent `ProviderError`; inspectez `error.code` et effectuez un 
 
 ## Tester sans clés API
 
-Lancez `payafrica dev`, puis passez `base_url="http://localhost:4004/mock/wave"`
+Lancez `waslpay dev`, puis passez `base_url="http://localhost:4004/mock/wave"`
 au vrai `WaveProvider`. En production, retirez seulement `base_url` et remplacez
 les valeurs d'environnement.
 
@@ -113,7 +113,7 @@ les valeurs d'environnement.
 
 ```bash
 poetry run pytest
-poetry run mypy payafrica
+poetry run mypy waslpay
 ```
 
 Les tests utilisent `pytest-asyncio` et `respx` pour rejouer les échanges HTTP des providers.

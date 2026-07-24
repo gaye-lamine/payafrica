@@ -26,5 +26,5 @@ createServer(async (request, response) => {
     response.writeHead(404, { "content-type": "text/plain; charset=utf-8" }).end("Not found");
   }
 }).listen(port, "127.0.0.1", () => {
-  console.log(`PayAfrica landing available at http://localhost:${port}`);
+  console.log(`WaslPay landing available at http://localhost:${port}`);
 });

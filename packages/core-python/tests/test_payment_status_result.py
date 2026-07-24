@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from payafrica.enums import PaymentError, PaymentStatus
-from payafrica.models import PaymentStatusResult
+from waslpay.enums import PaymentError, PaymentStatus
+from waslpay.models import PaymentStatusResult
 
 
 def test_failed_status_without_error_is_rejected() -> None:

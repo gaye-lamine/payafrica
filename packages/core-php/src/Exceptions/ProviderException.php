@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace PayAfrica\Sdk\Exceptions;
+namespace WaslPay\Sdk\Exceptions;
 
-use PayAfrica\Sdk\Enums\PaymentError;
+use WaslPay\Sdk\Enums\PaymentError;
 use RuntimeException;
 
 final class ProviderException extends RuntimeException

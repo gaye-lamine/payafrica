@@ -1,31 +1,31 @@
-# PayAfrica Core Node
+# WaslPay Core Node
 
 SDK TypeScript strict pour les paiements Orange Money, Wave et MTN MoMo.
 
 ## Installation
 
 ```bash
-npm install @payafrica/core-node
+npm install @waslpay/core-node
 # ou
-pnpm add @payafrica/core-node
+pnpm add @waslpay/core-node
 # ou
-yarn add @payafrica/core-node
+yarn add @waslpay/core-node
 ```
 
 ## Configuration et initialisation
 
-Créez un adaptateur pour le provider choisi, puis injectez-le dans `PayAfrica`.
+Créez un adaptateur pour le provider choisi, puis injectez-le dans `WaslPay`.
 
 ```ts
-import { PayAfrica } from "@payafrica/core-node";
-import { WaveProvider } from "@payafrica/core-node/providers/wave";
+import { WaslPay } from "@waslpay/core-node";
+import { WaveProvider } from "@waslpay/core-node/providers/wave";
 
 const provider = new WaveProvider({
   apiKey: process.env.WAVE_API_KEY!,
   webhookSecret: process.env.WAVE_WEBHOOK_SECRET!,
 });
 
-const payafrica = new PayAfrica(provider);
+const waslpay = new WaslPay(provider);
 ```
 
 Variables `.env` :
@@ -62,7 +62,7 @@ import express from "express";
 const app = express();
 
 // 1. Créer une session.
-const session = await payafrica.initiatePayment({
+const session = await waslpay.initiatePayment({
   amount: 1_000,
   currency: "XOF",
   reference: "order-123",
@@ -74,12 +74,12 @@ const session = await payafrica.initiatePayment({
 // Redirigez vers session.paymentUrl quand le flux provider en fournit une.
 
 // 2. Vérifier le statut.
-const status = await payafrica.checkStatus(session.id);
+const status = await waslpay.checkStatus(session.id);
 
 // 3. Le body brut est indispensable : placez cette route avant express.json().
 app.post("/webhooks/payments", express.raw({ type: "application/json" }), async (req, res) => {
   try {
-    const event = await payafrica.handleWebhook(req.body, req.headers);
+    const event = await waslpay.handleWebhook(req.body, req.headers);
     // Rendez ce traitement idempotent avec event.id.
     res.sendStatus(204);
   } catch {
@@ -88,7 +88,7 @@ app.post("/webhooks/payments", express.raw({ type: "application/json" }), async 
 });
 
 // 4. Rembourser. Wave et MTN prennent en charge ce flux ; Orange le rejette explicitement.
-const refund = await payafrica.refund(session.id, 500);
+const refund = await waslpay.refund(session.id, 500);
 ```
 
 ## Erreurs normalisées
@@ -105,7 +105,7 @@ Les erreurs adapter sont rejetées avec leur code `PaymentError`. Ne confirmez j
 
 ## Tester sans clés API
 
-Lancez `payafrica dev`, puis construisez le vrai `WaveProvider` avec des clés non vides
+Lancez `waslpay dev`, puis construisez le vrai `WaveProvider` avec des clés non vides
 et `baseUrl: "http://localhost:4004/mock/wave"`. En production, retirez seulement
 `baseUrl` et remplacez les valeurs d'environnement.
 

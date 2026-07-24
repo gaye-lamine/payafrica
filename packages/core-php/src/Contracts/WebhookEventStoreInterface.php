@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace PayAfrica\Sdk\Contracts;
+namespace WaslPay\Sdk\Contracts;
 
-use PayAfrica\Sdk\DTO\PaymentEvent;
+use WaslPay\Sdk\DTO\PaymentEvent;
 
 interface WebhookEventStoreInterface
 {

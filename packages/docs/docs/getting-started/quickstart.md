@@ -6,16 +6,16 @@ sidebar_position: 1
 
 Ce parcours Node.js crée une session Wave, lit son `PaymentStatusResult`, valide
 un webhook signé et exécute un remboursement. Il a été exécuté contre le mock
-local PayAfrica avec les vraies classes du SDK.
+local WaslPay avec les vraies classes du SDK.
 
 ## 1. Installer le SDK
 
 ```bash
-npm install @payafrica/core-node
+npm install @waslpay/core-node
 ```
 
-Vous pouvez aussi utiliser `pnpm add @payafrica/core-node` ou
-`yarn add @payafrica/core-node`.
+Vous pouvez aussi utiliser `pnpm add @waslpay/core-node` ou
+`yarn add @waslpay/core-node`.
 
 ## 2. Configurer Wave
 
@@ -30,8 +30,8 @@ WAVE_WEBHOOK_SECRET=votre_secret_webhook_wave
 Pour suivre ce guide sans clé API, utilisez le mode mock :
 
 ```bash
-npx @payafrica/cli init --language node --framework express --providers wave --mock
-npx @payafrica/cli dev --port 4004
+npx @waslpay/cli init --language node --framework express --providers wave --mock
+npx @waslpay/cli dev --port 4004
 ```
 
 Le générateur crée les variables `WAVE_API_KEY=mock_wave_key`,
@@ -42,12 +42,12 @@ le guide [Tester sans clés API](./testing-without-api-keys).
 ## 3. Exécuter le flux complet
 
 Créez un fichier `quickstart.mjs`, chargez votre `.env`, puis exécutez-le avec
-Node.js pendant que `payafrica dev` tourne dans un autre terminal.
+Node.js pendant que `waslpay dev` tourne dans un autre terminal.
 
 ```ts
 import { createHmac } from "node:crypto";
 
-import { PayAfrica, WaveProvider } from "@payafrica/core-node";
+import { WaslPay, WaveProvider } from "@waslpay/core-node";
 
 const provider = new WaveProvider({
   apiKey: process.env.WAVE_API_KEY!,
@@ -55,10 +55,10 @@ const provider = new WaveProvider({
   // Absente en production : le provider utilise alors https://api.wave.com/v1.
   baseUrl: process.env.WAVE_BASE_URL,
 });
-const payAfrica = new PayAfrica(provider);
+const waslPay = new WaslPay(provider);
 
 // 1. Créer une session de paiement.
-const session = await payAfrica.initiatePayment({
+const session = await waslPay.initiatePayment({
   amount: 1000,
   currency: "XOF",
   reference: "quickstart-order-123",
@@ -68,7 +68,7 @@ const session = await payAfrica.initiatePayment({
 });
 
 // 2. Lire un PaymentStatusResult, et non un statut nu.
-const statusResult = await payAfrica.checkStatus(session.id);
+const statusResult = await waslPay.checkStatus(session.id);
 if (statusResult.status === "failed") {
   console.error(statusResult.error);
 }
@@ -87,17 +87,17 @@ const rawWebhook = JSON.stringify({
 const signature = createHmac("sha256", process.env.WAVE_WEBHOOK_SECRET!)
   .update(rawWebhook)
   .digest("hex");
-const event = await payAfrica.handleWebhook(rawWebhook, {
+const event = await waslPay.handleWebhook(rawWebhook, {
   "x-wave-signature": signature,
 });
 
 // 4. Remboursement partiel. Wave et MTN le prennent en charge ; Orange le rejette.
-const refund = await payAfrica.refund(session.id, 500);
+const refund = await waslPay.refund(session.id, 500);
 
 console.log(JSON.stringify({ session, statusResult, event, refund }, null, 2));
 ```
 
-Sortie réellement capturée contre `payafrica dev` local :
+Sortie réellement capturée contre `waslpay dev` local :
 
 ```json
 {

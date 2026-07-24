@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace PayAfrica\Sdk\Tests\Contract;
+namespace WaslPay\Sdk\Tests\Contract;
 
-use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
-use PayAfrica\Sdk\Contracts\WebhookEventStoreInterface;
-use PayAfrica\Sdk\DTO\PaymentRequest;
-use PayAfrica\Sdk\Enums\PaymentError;
-use PayAfrica\Sdk\Enums\PaymentStatus;
-use PayAfrica\Sdk\Exceptions\ProviderException;
+use WaslPay\Sdk\Contracts\PaymentProviderInterface;
+use WaslPay\Sdk\Contracts\WebhookEventStoreInterface;
+use WaslPay\Sdk\DTO\PaymentRequest;
+use WaslPay\Sdk\Enums\PaymentError;
+use WaslPay\Sdk\Enums\PaymentStatus;
+use WaslPay\Sdk\Exceptions\ProviderException;
 use PHPUnit\Framework\TestCase;
 
 abstract class AbstractProviderContract extends TestCase

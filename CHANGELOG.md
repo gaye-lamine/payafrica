@@ -1,7 +1,20 @@
 # Changelog
 
-Toutes les modifications notables de PayAfrica SDK sont documentées dans ce
+Toutes les modifications notables du SDK WaslPay (anciennement PayAfrica) sont documentées dans ce
 fichier.
+
+## 1.0.0 — 2026-07-24
+
+### Renaming & Rebranding
+
+- Renommage officiel du projet et de l'ensemble de ses packages de **PayAfrica** à **WaslPay** :
+  - `@payafrica/core-node` $\to$ `@waslpay/core-node` (classe `WaslPay`).
+  - `@payafrica/cli` $\to$ `@waslpay/cli` (binaire `waslpay`).
+  - `payafrica/core-php` $\to$ `waslpay/core-php` (namespace `WaslPay\Sdk`).
+  - `payafrica-sdk` (Python) $\to$ `waslpay-sdk` (module `waslpay`).
+  - `@payafrica/docs` $\to$ `@waslpay/docs`.
+  - `@payafrica/landing` $\to$ `@waslpay/landing`.
+  - En-tête HTTP webhook générique $\to$ `x-waslpay-signature`.
 
 ## Unreleased
 

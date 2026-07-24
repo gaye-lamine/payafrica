@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace PayAfrica\Sdk\Providers;
+namespace WaslPay\Sdk\Providers;
 
 use LogicException;
-use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
-use PayAfrica\Sdk\DTO\PaymentEvent;
-use PayAfrica\Sdk\DTO\PaymentRequest;
-use PayAfrica\Sdk\DTO\PaymentSession;
-use PayAfrica\Sdk\DTO\PaymentStatusResult;
-use PayAfrica\Sdk\DTO\RefundResult;
+use WaslPay\Sdk\Contracts\PaymentProviderInterface;
+use WaslPay\Sdk\DTO\PaymentEvent;
+use WaslPay\Sdk\DTO\PaymentRequest;
+use WaslPay\Sdk\DTO\PaymentSession;
+use WaslPay\Sdk\DTO\PaymentStatusResult;
+use WaslPay\Sdk\DTO\RefundResult;
 
 final class TemplateProvider implements PaymentProviderInterface
 {

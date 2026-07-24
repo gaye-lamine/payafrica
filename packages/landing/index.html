@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="PayAfrica SDK unifie Orange Money, Wave et MTN MoMo derrière une interface unique." />
-    <title>PayAfrica SDK — Paiements unifiés en Afrique</title>
+    <meta name="description" content="WaslPay SDK unifie Orange Money, Wave et MTN MoMo derrière une interface unique." />
+    <title>WaslPay SDK — Paiements unifiés en Afrique</title>
     <style>
       :root { color-scheme: dark; --bg: #07111f; --panel: rgba(15, 28, 48, .72); --border: rgba(149, 171, 211, .16); --text: #f5f7ff; --muted: #a7b4cb; --indigo: #8b7cff; --emerald: #37e6b1; --cyan: #54caff; }
       * { box-sizing: border-box; }
@@ -59,20 +59,20 @@
   <body>
     <div class="shell">
       <nav>
-        <a class="brand" href="#top" aria-label="PayAfrica SDK"><span class="brand-mark">P</span>PayAfrica SDK</a>
-        <div class="nav-links"><a href="#features">Fonctionnalités</a><a href="#developers">Développeurs</a><a href="https://gaye-lamine.github.io/payafrica/">Documentation</a></div>
-        <a class="nav-github" href="https://github.com/gaye-lamine/payafrica">GitHub</a>
+        <a class="brand" href="#top" aria-label="WaslPay SDK"><span class="brand-mark">P</span>WaslPay SDK</a>
+        <div class="nav-links"><a href="#features">Fonctionnalités</a><a href="#developers">Développeurs</a><a href="https://gaye-lamine.github.io/waslpay/">Documentation</a></div>
+        <a class="nav-github" href="https://github.com/gaye-lamine/waslpay">GitHub</a>
       </nav>
 
       <main id="top">
         <section class="hero">
           <!-- Mettre ce numéro à jour manuellement à chaque release tant qu'aucune CI dédiée ne déploie la landing. -->
-          <div class="badge">🚀 PayAfrica v2.0.0 is live</div>
+          <div class="badge">🚀 WaslPay v2.0.0 is live</div>
           <h1>Le SDK de paiement universel pour <span>l’Afrique de l’Ouest.</span></h1>
           <p class="hero-copy">Unifiez Orange Money, Wave et MTN MoMo en une seule ligne de code. Multi-langage pour Node.js, PHP et Python.</p>
           <div class="actions">
-            <button id="copy-command" class="button button-primary" type="button" data-command="npx @payafrica/cli init">Installer le CLI&nbsp; <code>npx @payafrica/cli init</code></button>
-            <a class="button button-secondary" href="https://github.com/gaye-lamine/payafrica">Voir sur GitHub</a>
+            <button id="copy-command" class="button button-primary" type="button" data-command="npx @waslpay/cli init">Installer le CLI&nbsp; <code>npx @waslpay/cli init</code></button>
+            <a class="button button-secondary" href="https://github.com/gaye-lamine/waslpay">Voir sur GitHub</a>
           </div>
           <div id="copy-hint" class="copy-hint" aria-live="polite"></div>
         </section>
@@ -84,7 +84,7 @@
         <section id="features" class="section">
           <div class="eyebrow">Une intégration, plusieurs réseaux</div>
           <h2>La complexité des providers, enfin isolée.</h2>
-          <p class="section-copy">PayAfrica normalise les paiements, les statuts et les webhooks. Vos applications gardent une interface stable pendant que chaque adaptateur gère les spécificités de son opérateur.</p>
+          <p class="section-copy">WaslPay normalise les paiements, les statuts et les webhooks. Vos applications gardent une interface stable pendant que chaque adaptateur gère les spécificités de son opérateur.</p>
           <div class="features">
             <article class="feature"><div class="feature-index">01</div><h3>Multi-opérateurs</h3><p>Orange Money, Wave et MTN MoMo derrière un contrat de paiement commun.</p></article>
             <article class="feature"><div class="feature-index">02</div><h3>CLI tout-en-un</h3><p>Initialisez, simulez, diagnostiquez et déclenchez vos webhooks avec <code>init</code>, <code>dev</code>, <code>doctor</code> et <code>trigger</code>.</p></article>
@@ -98,9 +98,9 @@
             <div class="eyebrow">Developer experience</div>
             <h2>De la première ligne au premier paiement.</h2>
             <p class="section-copy">Choisissez un provider, créez une session et traitez un événement normalisé. L’intégration reste lisible, typée et testable.</p>
-            <div class="sandbox"><strong>Sandbox locale intégrée</strong><code>payafrica dev</code> ouvre un checkout local et signe les webhooks de test automatiquement.</div>
+            <div class="sandbox"><strong>Sandbox locale intégrée</strong><code>waslpay dev</code> ouvre un checkout local et signe les webhooks de test automatiquement.</div>
           </div>
-          <div class="terminal" aria-label="Exemple TypeScript"><div class="terminal-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="purple">const</span> payment = <span class="purple">new</span> <span class="blue">PayAfrica</span>(provider);
+          <div class="terminal" aria-label="Exemple TypeScript"><div class="terminal-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><pre><span class="purple">const</span> payment = <span class="purple">new</span> <span class="blue">WaslPay</span>(provider);
 
 <span class="purple">const</span> session = <span class="purple">await</span> payment.<span class="green">initiatePayment</span>({
   amount: <span class="blue">15000</span>, currency: <span class="green">"XOF"</span>,
@@ -114,8 +114,8 @@
       </main>
 
       <footer>
-        <span>PayAfrica SDK — paiements mobiles sans fragmentation.</span>
-        <div class="footer-links"><a href="https://www.npmjs.com/package/@payafrica/core-node">npm</a><a href="https://pypi.org/project/payafrica-sdk/">PyPI</a><a href="https://packagist.org/packages/payafrica/core-php">Packagist</a><a href="https://github.com/gaye-lamine/payafrica">GitHub</a></div>
+        <span>WaslPay SDK — paiements mobiles sans fragmentation.</span>
+        <div class="footer-links"><a href="https://www.npmjs.com/package/@waslpay/core-node">npm</a><a href="https://pypi.org/project/waslpay-sdk/">PyPI</a><a href="https://packagist.org/packages/waslpay/core-php">Packagist</a><a href="https://github.com/gaye-lamine/waslpay">GitHub</a></div>
       </footer>
     </div>
     <script>

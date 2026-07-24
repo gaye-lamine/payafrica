@@ -8,10 +8,10 @@ import sys
 import httpx
 import respx
 
-from payafrica.enums import PaymentError, PaymentStatus
-from payafrica.models import PaymentEvent, PaymentRequest
-from payafrica.providers.wave import WaveProvider
-from payafrica.webhook_event_store import WebhookEventStore
+from waslpay.enums import PaymentError, PaymentStatus
+from waslpay.models import PaymentEvent, PaymentRequest
+from waslpay.providers.wave import WaveProvider
+from waslpay.webhook_event_store import WebhookEventStore
 from tests.contract import ProviderContractTests
 
 

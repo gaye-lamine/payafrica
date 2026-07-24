@@ -10,13 +10,13 @@ const coreNodePackage = JSON.parse(
 ) as { version: string };
 
 const config: Config = {
-  title: "PayAfrica",
+  title: "WaslPay",
   tagline: "Documentation du SDK de paiement mobile unifié",
   favicon: "img/favicon.svg",
   url: "https://gaye-lamine.github.io",
-  baseUrl: "/payafrica/",
+  baseUrl: "/waslpay/",
   organizationName: "gaye-lamine",
-  projectName: "payafrica",
+  projectName: "waslpay",
   onBrokenLinks: "throw",
   markdown: {
     hooks: {
@@ -34,7 +34,7 @@ const config: Config = {
         docs: {
           routeBasePath: "/",
           sidebarPath: "./sidebars.ts",
-          editUrl: "https://github.com/gaye-lamine/payafrica/tree/main/packages/docs/",
+          editUrl: "https://github.com/gaye-lamine/waslpay/tree/main/packages/docs/",
         },
         blog: false,
         theme: {
@@ -45,12 +45,12 @@ const config: Config = {
   ],
   themeConfig: {
     navbar: {
-      title: "PayAfrica",
+      title: "WaslPay",
       items: [
         { type: "docSidebar", sidebarId: "docs", position: "left", label: "Documentation" },
         { to: "/cli", label: "CLI", position: "left" },
         { to: "/", label: `SDK v${coreNodePackage.version}`, position: "right" },
-        { href: "https://github.com/gaye-lamine/payafrica", label: "GitHub", position: "right" },
+        { href: "https://github.com/gaye-lamine/waslpay", label: "GitHub", position: "right" },
       ],
     },
     footer: {
@@ -59,20 +59,20 @@ const config: Config = {
         {
           title: "SDK",
           items: [
-            { label: "Node.js", href: "https://www.npmjs.com/package/@payafrica/core-node" },
-            { label: "PHP", href: "https://packagist.org/packages/payafrica/core-php" },
-            { label: "Python", href: "https://pypi.org/project/payafrica-sdk/" },
+            { label: "Node.js", href: "https://www.npmjs.com/package/@waslpay/core-node" },
+            { label: "PHP", href: "https://packagist.org/packages/waslpay/core-php" },
+            { label: "Python", href: "https://pypi.org/project/waslpay-sdk/" },
           ],
         },
         {
           title: "Projet",
           items: [
-            { label: "GitHub", href: "https://github.com/gaye-lamine/payafrica" },
-            { label: "Changelog", href: "https://github.com/gaye-lamine/payafrica/blob/main/CHANGELOG.md" },
+            { label: "GitHub", href: "https://github.com/gaye-lamine/waslpay" },
+            { label: "Changelog", href: "https://github.com/gaye-lamine/waslpay/blob/main/CHANGELOG.md" },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} PayAfrica. MIT License.`,
+      copyright: `Copyright © ${new Date().getFullYear()} WaslPay. MIT License.`,
     },
     prism: {
       additionalLanguages: ["php", "python"],

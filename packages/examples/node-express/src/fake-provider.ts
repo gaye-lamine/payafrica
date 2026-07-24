@@ -15,7 +15,7 @@ import {
   type PaymentSession,
   type PaymentStatusResult,
   type RefundResult,
-} from "@payafrica/core-node";
+} from "@waslpay/core-node";
 
 export interface FakePaymentProviderConfig {
   webhookSecret: string;
@@ -58,7 +58,7 @@ export class FakePaymentProvider implements PaymentProvider {
       amount: params.amount,
       currency: params.currency,
       status: PaymentStatus.Pending,
-      paymentUrl: `https://payafrica.local/fake-checkout/${id}`,
+      paymentUrl: `https://waslpay.local/fake-checkout/${id}`,
     };
     this.payments.set(id, { session, createdAt: Date.now() });
     return session;
@@ -127,11 +127,11 @@ export class FakePaymentProvider implements PaymentProvider {
     rawBody: string,
     headers: Record<string, string | string[] | undefined>
   ): void {
-    const candidate = headers["x-payafrica-signature"] ?? headers["X-PayAfrica-Signature"];
+    const candidate = headers["x-waslpay-signature"] ?? headers["X-WaslPay-Signature"] ?? headers["x-waslpay-signature"] ?? headers["X-WaslPay-Signature"];
     const signature = Array.isArray(candidate) ? candidate[0] : candidate;
     const expected = createHmac("sha256", this.config.webhookSecret).update(rawBody).digest("hex");
     if (signature === undefined || !this.signaturesMatch(expected, signature)) {
-      throw new FakePaymentProviderError(PaymentError.Unknown, "Invalid PayAfrica webhook signature");
+      throw new FakePaymentProviderError(PaymentError.Unknown, "Invalid WaslPay webhook signature");
     }
   }
 

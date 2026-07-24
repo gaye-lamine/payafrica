@@ -1,6 +1,6 @@
 {
-  "name": "@payafrica/example-node-express",
-  "version": "0.1.0",
+  "name": "@waslpay/example-node-express",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@payafrica/core-node": "file:../../core-node",
+    "@waslpay/core-node": "file:../../core-node",
     "express": "^5.1.0"
   },
   "devDependencies": {

@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace PayAfrica\Sdk\Providers;
+namespace WaslPay\Sdk\Providers;
 
 use GuzzleHttp\Psr7\HttpFactory;
-use PayAfrica\Sdk\Contracts\PaymentProviderInterface;
-use PayAfrica\Sdk\Contracts\WebhookEventStoreInterface;
-use PayAfrica\Sdk\DTO\PaymentEvent;
-use PayAfrica\Sdk\DTO\PaymentRequest;
-use PayAfrica\Sdk\DTO\PaymentSession;
-use PayAfrica\Sdk\DTO\PaymentStatusResult;
-use PayAfrica\Sdk\DTO\RefundResult;
-use PayAfrica\Sdk\Enums\PaymentError;
-use PayAfrica\Sdk\Enums\PaymentStatus;
-use PayAfrica\Sdk\Exceptions\ProviderException;
-use PayAfrica\Sdk\Support\InMemoryWebhookEventStore;
+use WaslPay\Sdk\Contracts\PaymentProviderInterface;
+use WaslPay\Sdk\Contracts\WebhookEventStoreInterface;
+use WaslPay\Sdk\DTO\PaymentEvent;
+use WaslPay\Sdk\DTO\PaymentRequest;
+use WaslPay\Sdk\DTO\PaymentSession;
+use WaslPay\Sdk\DTO\PaymentStatusResult;
+use WaslPay\Sdk\DTO\RefundResult;
+use WaslPay\Sdk\Enums\PaymentError;
+use WaslPay\Sdk\Enums\PaymentStatus;
+use WaslPay\Sdk\Exceptions\ProviderException;
+use WaslPay\Sdk\Support\InMemoryWebhookEventStore;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseInterface;

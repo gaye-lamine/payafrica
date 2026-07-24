@@ -1,11 +1,11 @@
-# PayAfrica Core PHP
+# WaslPay Core PHP
 
 SDK PHP 8.1+ fondé sur PSR-18, PSR-7 et des DTO immuables.
 
 ## Installation
 
 ```bash
-composer require payafrica/core-php
+composer require waslpay/core-php
 ```
 
 Pour développer ce monorepo :
@@ -22,15 +22,15 @@ Injectez un client HTTP PSR-18 et le provider choisi dans la façade.
 <?php
 
 use GuzzleHttp\Client;
-use PayAfrica\Sdk\PayAfrica;
-use PayAfrica\Sdk\Providers\WaveProvider;
+use WaslPay\Sdk\WaslPay;
+use WaslPay\Sdk\Providers\WaveProvider;
 
 $provider = new WaveProvider(
     new Client(),
     getenv('WAVE_API_KEY'),
     getenv('WAVE_WEBHOOK_SECRET'),
 );
-$payAfrica = new PayAfrica($provider);
+$waslPay = new WaslPay($provider);
 ```
 
 Variables `.env` :
@@ -61,10 +61,10 @@ MTN_MOMO_DEFAULT_CURRENCY=XOF
 
 declare(strict_types=1);
 
-use PayAfrica\Sdk\DTO\PaymentRequest;
+use WaslPay\Sdk\DTO\PaymentRequest;
 
 // 1. Créer une session.
-$session = $payAfrica->initiatePayment(new PaymentRequest(
+$session = $waslPay->initiatePayment(new PaymentRequest(
     amount: 1000,
     currency: 'XOF',
     reference: 'order-123',
@@ -74,17 +74,17 @@ $session = $payAfrica->initiatePayment(new PaymentRequest(
 ));
 
 // 2. Vérifier le statut.
-$statusResult = $payAfrica->checkStatus($session->id);
+$statusResult = $waslPay->checkStatus($session->id);
 if ($statusResult->status === PaymentStatus::Failed) {
     $error = $statusResult->error;
 }
 
 // 3. Une route webhook doit transmettre le body brut, sans json_decode préalable.
 $rawBody = file_get_contents('php://input');
-$event = $payAfrica->handleWebhook($rawBody, getallheaders());
+$event = $waslPay->handleWebhook($rawBody, getallheaders());
 
 // 4. Rembourser. Orange Money rejette explicitement cette opération.
-$refund = $payAfrica->refund($session->id, 500);
+$refund = $waslPay->refund($session->id, 500);
 ```
 
 Traitez `PaymentEvent::$id` de manière idempotente et répondez seulement après validation du header de sécurité par l'adaptateur.
@@ -103,7 +103,7 @@ Les adaptateurs lèvent `ProviderException`; consultez sa propriété `paymentEr
 
 ## Tester sans clés API
 
-Lancez `payafrica dev`, puis passez `http://localhost:4004/mock/wave` comme dernier
+Lancez `waslpay dev`, puis passez `http://localhost:4004/mock/wave` comme dernier
 argument `baseUrlOverride` du vrai `WaveProvider`. En production, retirez seulement
 cette URL et remplacez les valeurs d'environnement.
 

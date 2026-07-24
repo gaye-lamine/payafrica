@@ -29,7 +29,7 @@ export async function triggerCommand(event: string, options: TriggerCommandOptio
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-payafrica-signature": `sha256=${signature}`,
+        "x-waslpay-signature": `sha256=${signature}`,
       },
       body: rawBody,
     });

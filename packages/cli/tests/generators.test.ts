@@ -17,7 +17,7 @@ describe("generateEnvExample", () => {
   it.each(providers)("includes the expected variables for %s", (provider) => {
     const generated = generateEnvExample([provider]);
 
-    expect(generated).toContain("# PayAfrica SDK configuration");
+    expect(generated).toContain("# WaslPay SDK configuration");
     for (const expectedLine of providerEnvironmentLines[provider]) {
       expect(generated).toContain(expectedLine);
     }
@@ -38,7 +38,7 @@ describe("generateNodeBoilerplate", () => {
     const generated = generateNodeBoilerplate(framework, [provider]);
 
     expect(generated).toContain(`// Generated for ${framework}. Selected providers: ${provider}`);
-    expect(generated).toContain("const payafrica = new PayAfrica(provider);");
+    expect(generated).toContain("const waslpay = new WaslPay(provider);");
     expect(generated).toContain("webhooks/payments");
   });
 });
@@ -51,7 +51,7 @@ describe("generatePhpBoilerplate", () => {
     const generated = generatePhpBoilerplate(framework, [provider]);
 
     expect(generated).toContain(`// Generated for ${framework}. Selected providers: ${provider}`);
-    expect(generated).toContain("$payAfrica = new PayAfrica($provider);");
+    expect(generated).toContain("$waslPay = new WaslPay($provider);");
     expect(generated).toContain("file_get_contents('php://input')");
   });
 });
@@ -64,7 +64,7 @@ describe("generatePythonBoilerplate", () => {
     const generated = generatePythonBoilerplate(framework, [provider]);
 
     expect(generated).toContain(`# Generated for ${framework}. Selected providers: ${provider}`);
-    expect(generated).toContain("payafrica = PayAfrica(provider)");
+    expect(generated).toContain("waslpay = WaslPay(provider)");
     expect(generated).toContain("handle_webhook");
   });
 });
