@@ -2,19 +2,80 @@
 sidebar_position: 1
 ---
 
-# Sécuriser les webhooks
+# Sécuriser et gérer les webhooks
 
-Transmettez toujours le body HTTP brut et les headers entrants au provider. Ne
-parsez pas puis ne re-sérialisez pas le payload avant la vérification : une
-signature HMAC dépend des octets exacts reçus.
+Les webhooks permettent d'être notifié de manière asynchrone des changements de statut d'un paiement (ex. confirmation par le client ou échec). PayAfrica garantit la sécurité et l'idempotence de ces notifications à travers la méthode `handleWebhook`.
+
+## 1. Sécurité et vérification de signature HMAC
+
+Pour éviter les attaques par rejeu ou l'injection de faux événements, chaque opérateur signe ses webhooks (ex. header `x-wave-signature` pour Wave).
+
+**Règle d'or** : Transmettez toujours le **body HTTP brut** (`string` ou `Buffer`) et les headers entrants à `payAfrica.handleWebhook`. Ne parsez pas puis ne re-sérialisez pas le corps JSON dans votre middleware HTTP avant la vérification : la signature HMAC dépend des octets exacts reçus du réseau.
+
+Si la signature est invalide ou absente, l'adaptateur lève une exception `PaymentError.Unknown` (ex. `"Invalid Wave webhook signature"`), rejetant ainsi la requête avant tout traitement métier.
+
+## 2. Idempotence et `WebhookEventStore`
+
+Les opérateurs Mobile Money peuvent renvoyer le même événement webhook plusieurs fois en cas de latence réseau. Pour éviter les doubles crédits ou doubles traitements :
+
+- **Comportement par défaut** : Chaque instance de provider instancie un `InMemoryWebhookEventStore` local. Il déduplique les événements (basé sur l'ID d'événement) **uniquement pendant la durée de vie de cette instance**.
+- **Déploiements distribués et multi-workers** : Le store par défaut n'est pas partagé entre deux instances de provider ni conservé entre deux redémarrages. Dans un environnement de production (multi-processus, Kubernetes, Serverless), injectez un store persistant partagé (ex. basé sur Redis ou une base SQL) via l'option `webhookEventStore` du constructeur.
+
+Pour en savoir plus sur les spécificités d'idempotence selon les langages, consultez le guide [Compatibilité PayAfrica](../compatibility.md#idempotence-des-webhooks).
+
+## 3. Exemple d'intégration complet (Express / Node.js)
+
+Voici un exemple exécutable de réception et de validation d'un webhook Wave en Node.js :
 
 ```ts
-app.post("/webhooks/payafrica", express.raw({ type: "application/json" }), async (req, res) => {
-  const event = await payAfrica.handleWebhook(req.body, req.headers);
-  res.status(200).json({ accepted: true, eventId: event.id });
+import { createHmac } from "node:crypto";
+import express from "express";
+import { PayAfrica, WaveProvider } from "@payafrica/core-node";
+
+const app = express();
+
+const provider = new WaveProvider({
+  apiKey: process.env.WAVE_API_KEY!,
+  webhookSecret: process.env.WAVE_WEBHOOK_SECRET!,
+  baseUrl: process.env.WAVE_BASE_URL, // http://127.0.0.1:4004/mock/wave en mode mock
 });
+const payAfrica = new PayAfrica(provider);
+
+// Utiliser express.raw pour capturer les octets bruts (Buffer/string)
+app.post(
+  "/webhooks/wave",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    try {
+      // 1. handleWebhook valide la signature HMAC et déduplique l'événement
+      const event = await payAfrica.handleWebhook(req.body, req.headers);
+
+      console.log(`[Webhook Reçu] Event ID: ${event.id}, Statut: ${event.status}`);
+
+      // 2. Mettre à jour votre commande en base de données selon event.status
+      // if (event.status === "success") { markOrderAsPaid(event.reference); }
+
+      res.status(200).json({ accepted: true, eventId: event.id });
+    } catch (error) {
+      console.error("Échec de vérification du webhook:", error);
+      res.status(400).json({ error: "Invalid webhook signature or payload" });
+    }
+  }
+);
 ```
 
-Une signature invalide doit être rejetée avant toute mise à jour métier. Pour
-les événements répétés, utilisez un store d'idempotence persistant dans les
-déploiements multi-worker ou serverless.
+### Sortie `PaymentEvent` réellement capturée contre `payafrica dev`
+
+Lorsque `handleWebhook` est appelé avec un payload et une signature HMAC SHA-256 valides pour une session créée (`wave_e37ba94b-4788-48ad-81be-7f1381a7e4df`), il retourne un objet `PaymentEvent` normalisé :
+
+```json
+{
+  "id": "evt_wave_webhook_guide_001",
+  "sessionId": "wave_e37ba94b-4788-48ad-81be-7f1381a7e4df",
+  "status": "success",
+  "reference": "webhook-guide-order-456",
+  "occurredAt": "2026-07-24T03:14:00.000Z"
+}
+```
+
+
