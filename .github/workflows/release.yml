@@ -82,10 +82,10 @@ jobs:
           persist-credentials: false
       - name: Verify mirror authentication is configured
         env:
-          MIRROR_TOKEN: ${{ secrets.WASLPAY_PHP_MIRROR_TOKEN }}
+          MIRROR_TOKEN: ${{ secrets.PAYAFRICA_PHP_MIRROR_TOKEN }}
         run: |
           if [ -z "$MIRROR_TOKEN" ]; then
-            echo "::error title=Missing WASLPAY_PHP_MIRROR_TOKEN::Create the repository secret WASLPAY_PHP_MIRROR_TOKEN with Contents: Read and write access to gaye-lamine/waslpay-php."
+            echo "::error title=Missing PAYAFRICA_PHP_MIRROR_TOKEN::Create the repository secret PAYAFRICA_PHP_MIRROR_TOKEN with Contents: Read and write access to gaye-lamine/waslpay-php."
             exit 1
           fi
       - name: Resolve mirror tag
@@ -106,7 +106,7 @@ jobs:
         run: git subtree split --prefix=packages/core-php -b php-mirror-branch
       - name: Push PHP package and matching tag to the mirror
         env:
-          MIRROR_TOKEN: ${{ secrets.WASLPAY_PHP_MIRROR_TOKEN }}
+          MIRROR_TOKEN: ${{ secrets.PAYAFRICA_PHP_MIRROR_TOKEN }}
           RELEASE_TAG: ${{ steps.mirror-tag.outputs.name }}
         run: |
           git remote add php-mirror "https://x-access-token:${MIRROR_TOKEN}@github.com/gaye-lamine/waslpay-php.git"
