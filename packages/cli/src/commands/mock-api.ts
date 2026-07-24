@@ -20,7 +20,7 @@ export function createProviderMocks() {
     if (path === "/mock/orange/v1/onlinePayment/prepare" && request.method === "POST") {
       const reference = string(body.reference) ?? randomUUID(); const amount = number(body.amount);
       orange.set(reference, { reference, amount, status: "PENDING" });
-      send(200, { paymentUrl: `http://localhost/mock/orange/checkout/${reference}` }); return true;
+      send(200, { paymentUrl: `${origin(request)}/mock/orange/checkout/${reference}` }); return true;
     }
     if (path === "/mock/orange/api/eWallet/v1/transactions" && request.method === "GET") {
       const transaction = orange.get(url.searchParams.get("reference") ?? "");
@@ -29,7 +29,7 @@ export function createProviderMocks() {
     if (path === "/mock/wave/checkout/sessions" && request.method === "POST") {
       const id = `wave_${randomUUID()}`; const reference = string(body.client_reference) ?? id; const amount = number(body.amount);
       wave.set(id, { reference, amount, status: "processing" });
-      send(201, { id, wave_launch_url: `http://localhost/mock/wave/checkout/${id}` }); return true;
+      send(201, { id, wave_launch_url: `${origin(request)}/mock/wave/checkout/${id}` }); return true;
     }
     const waveMatch = path.match(/^\/mock\/wave\/checkout\/sessions\/([^/]+)(\/refund)?$/);
     if (waveMatch?.[1] !== undefined) {
@@ -53,3 +53,4 @@ async function json(request: IncomingMessage): Promise<Record<string, unknown>> 
 function string(value: unknown): string | undefined { return typeof value === "string" ? value : undefined; }
 function number(value: unknown): number { const parsed = Number(value); return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 1000; }
 function header(request: IncomingMessage, name: string): string | undefined { const value = request.headers[name]; return typeof value === "string" ? value : undefined; }
+function origin(request: IncomingMessage): string { return `http://${header(request, "host") ?? "localhost"}`; }

@@ -3,6 +3,16 @@
 Toutes les modifications notables de PayAfrica SDK sont documentées dans ce
 fichier.
 
+## Unreleased
+
+### Fixes
+
+- Les providers Wave Node, PHP et Python lisent maintenant le champ d'erreur
+  top-level `code` en plus de `error_code`, afin que les réponses utilisant cette
+  forme participent au mapping vers `PaymentError`. `no-matching-api-key` reste
+  normalisé en `UNKNOWN`, car le contrat commun ne possède pas de code dédié aux
+  identifiants API invalides.
+
 ## 2.0.0 — 2026-07-22
 
 ### Breaking changes

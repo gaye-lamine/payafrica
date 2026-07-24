@@ -25,6 +25,7 @@ final class WaveProviderTest extends AbstractProviderContract
         $responses = match ($this->name()) {
             'testInitiatePaymentAndCheckStatusSuccess' => [$this->json(['id' => 'wave-1', 'wave_launch_url' => 'https://wave.test/pay']), $this->json(['payment_status' => 'succeeded'])],
             'testPaymentFailedMappedToPaymentError' => [$this->json(['payment_status' => 'cancelled', 'error_code' => 'insufficient-funds'])],
+            'testApiErrorCodeFieldMapped' => [$this->json(['code' => 'insufficient-funds', 'message' => 'Wave code field error'], 400)],
             'testPartialRefund' => [$this->json(['amount' => 1000]), $this->json(['id' => 'refund-1', 'amount' => 500, 'status' => 'succeeded'])],
             'testFullRefund' => [$this->json(['amount' => 1000]), $this->json(['id' => 'refund-2', 'amount' => 1000, 'status' => 'succeeded'])],
             'testRefundAmountExceedingOriginalIsRejected' => [$this->json(['amount' => 1000])],
@@ -45,6 +46,7 @@ final class WaveProviderTest extends AbstractProviderContract
             'failedSessionId' => 'contract-failed', 'failedPaymentError' => PaymentError::InsufficientFunds, 'timeoutSessionId' => 'contract-timeout',
             'validWebhook' => ['rawBody' => $rawBody, 'headers' => ['x-wave-signature' => hash_hmac('sha256', $rawBody, self::SECRET)], 'id' => 'event-1', 'sessionId' => 'wave-1', 'status' => PaymentStatus::Success],
             'invalidWebhook' => ['rawBody' => '{}', 'headers' => ['x-wave-signature' => 'invalid']],
+            'apiError' => ['sessionId' => 'wave-api-error', 'expectedError' => PaymentError::InsufficientFunds],
             'refund' => ['sessionId' => 'contract-success', 'originalAmount' => 1000, 'unusualOriginalSessionId' => 'wave-unusual', 'unusualOriginalAmount' => PHP_INT_MAX, 'partialAmount' => 500, 'fullAmount' => 1000, 'supported' => true, 'status' => PaymentStatus::Success],
             'expiration' => ['sessionId' => 'wave-expired', 'supported' => true, 'webhook' => ['rawBody' => $expiredWebhook, 'headers' => ['x-wave-signature' => hash_hmac('sha256', $expiredWebhook, self::SECRET)], 'id' => 'event-expired', 'sessionId' => 'wave-expired', 'status' => PaymentStatus::Expired, 'occurredAt' => '2026-07-22T12:00:00+00:00']],
         ];

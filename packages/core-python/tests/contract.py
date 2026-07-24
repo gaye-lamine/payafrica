@@ -56,6 +56,14 @@ class ProviderContractTests(ABC):
     def timeout_session_id(self) -> str: ...
 
     @property
+    def api_error_session_id(self) -> str | None:
+        return None
+
+    @property
+    def api_error_expected_error(self) -> PaymentError | None:
+        return None
+
+    @property
     @abstractmethod
     def valid_webhook(self) -> tuple[str, WebhookHeaders, PaymentEvent]: ...
 
@@ -141,6 +149,19 @@ class ProviderContractTests(ABC):
             with pytest.raises(ProviderError) as raised:
                 await self.create_provider(client).handle_webhook(raw_body, headers)
         assert raised.value.code is PaymentError.UNKNOWN
+
+    @respx.mock
+    @pytest.mark.asyncio
+    async def test_api_error_code_field_mapped(self) -> None:
+        session_id = self.api_error_session_id
+        expected_error = self.api_error_expected_error
+        if session_id is None or expected_error is None:
+            pytest.skip("Provider has no API error code fixture")
+        self.install_http_mock()
+        async with httpx.AsyncClient() as client:
+            with pytest.raises(ProviderError) as raised:
+                await self.create_provider(client).check_status(session_id)
+        assert raised.value.code is expected_error
 
     @respx.mock
     @pytest.mark.asyncio

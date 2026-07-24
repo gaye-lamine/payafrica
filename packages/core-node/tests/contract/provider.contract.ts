@@ -34,6 +34,11 @@ interface ExpirationFixture {
   webhook?: WebhookFixture;
 }
 
+interface ApiErrorFixture {
+  sessionId: string;
+  expectedError: PaymentError;
+}
+
 export interface ProviderContractFixture {
   createProvider(eventStore?: WebhookEventStore): PaymentProvider;
   installHttpMock(): void;
@@ -43,6 +48,7 @@ export interface ProviderContractFixture {
   timeoutSessionId: string;
   validWebhook: WebhookFixture;
   invalidWebhook: Pick<WebhookFixture, "rawBody" | "headers">;
+  apiError?: ApiErrorFixture;
   refund: RefundFixture;
   expiration: ExpirationFixture;
 }
@@ -87,6 +93,14 @@ export function runProviderContractTests(providerName: string, fixture: Provider
       await expect(
         fixture.createProvider().handleWebhook(fixture.invalidWebhook.rawBody, fixture.invalidWebhook.headers)
       ).rejects.toMatchObject({ code: PaymentError.Unknown });
+    });
+
+    it.skipIf(fixture.apiError === undefined)("erreur API via le champ code", async () => {
+      fixture.installHttpMock();
+
+      await expect(fixture.createProvider().checkStatus(fixture.apiError!.sessionId)).rejects.toMatchObject({
+        code: fixture.apiError!.expectedError,
+      });
     });
 
     it("remboursement partiel", async () => {

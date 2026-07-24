@@ -110,8 +110,8 @@ class WaveProvider(PaymentProvider):
         except httpx.HTTPError as exc: raise ProviderError(PaymentError.PROVIDER_TIMEOUT, str(exc)) from exc
         payload = response.json() if response.content else {}; payload = payload if isinstance(payload, dict) else {}
         if response.is_error:
-            error = self._map_error(response.status_code, payload.get("error_code"))
-            raise ProviderError(error, str(payload.get("error_message", "Wave request failed")))
+            error = self._map_error(response.status_code, payload.get("error_code", payload.get("code")))
+            raise ProviderError(error, str(payload.get("error_message", payload.get("message", "Wave request failed"))))
         return payload
 
     @staticmethod

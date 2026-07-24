@@ -27,6 +27,9 @@ function installHttpMock(): void {
     if (url.includes("/checkout/sessions/")) {
       const sessionId = url.substring(url.lastIndexOf("/") + 1);
       if (sessionId === "wave-session-timeout") return Response.json({}, { status: 503 });
+      if (sessionId === "wave-session-api-error") {
+        return Response.json({ code: "insufficient-funds", message: "Wave code field error" }, { status: 400 });
+      }
       return Response.json({
         amount: sessionId === "wave-session-unusual" ? Number.MAX_SAFE_INTEGER : 1_000,
         ...(sessionId === "wave-session-expired"
@@ -68,6 +71,7 @@ const fixture: ProviderContractFixture = {
     },
   },
   invalidWebhook: { rawBody: '{"id":"wave-event-1"}', headers: { "x-wave-signature": "invalid" } },
+  apiError: { sessionId: "wave-session-api-error", expectedError: PaymentError.InsufficientFunds },
   refund: { sessionId: "wave-session-success", originalAmount: 1_000, unusualOriginalSessionId: "wave-session-unusual", unusualOriginalAmount: Number.MAX_SAFE_INTEGER, partialAmount: 500, fullAmount: 1_000, supported: true },
   expiration: {
     sessionId: "wave-session-expired",

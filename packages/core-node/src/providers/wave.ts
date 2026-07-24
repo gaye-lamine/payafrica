@@ -48,6 +48,8 @@ interface WaveRefundResponse {
 }
 
 interface WaveErrorResponse {
+  /** Wave may return a top-level `code` for API-level errors. */
+  code?: string;
   error_code?: string;
   error_message?: string;
   message?: string;
@@ -223,7 +225,7 @@ export class WaveProvider implements PaymentProvider {
   private async toResponseError(response: Response): Promise<WaveProviderError> {
     const body = await this.readJsonOrEmpty<WaveErrorResponse>(response);
     const message = body.error_message ?? body.message ?? `Wave request failed with HTTP ${response.status}`;
-    return new WaveProviderError(this.mapError(response.status, body.error_code), message);
+    return new WaveProviderError(this.mapError(response.status, body.error_code ?? body.code), message);
   }
 
   private toProviderError(error: unknown): WaveProviderError {

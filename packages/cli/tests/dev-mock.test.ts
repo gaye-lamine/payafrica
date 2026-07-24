@@ -24,6 +24,7 @@ describe("payafrica dev provider API mocks", () => {
   it("runs the real Wave provider against the local mock", async () => {
     const provider = new WaveProvider({ apiKey: "mock", webhookSecret: "mock", baseUrl: await mockBase("wave") });
     const session = await provider.initiatePayment({ amount: 1200, currency: "XOF", reference: "wave-order" });
+    expect(session.paymentUrl).toBe(`${awaitableBaseUrl(session.id)}`);
     expect((await provider.checkStatus(session.id)).status).toBe(PaymentStatus.Pending);
     expect((await provider.refund(session.id, 100)).amount).toBe(100);
   });
@@ -34,5 +35,12 @@ describe("payafrica dev provider API mocks", () => {
     expect((await provider.refund(session.id, 100)).amount).toBe(100);
   });
 });
+
+function awaitableBaseUrl(sessionId: string): string {
+  const server = servers[servers.length - 1];
+  const address = server.address();
+  if (address === null || typeof address === "string") throw new Error("Expected server address");
+  return `http://127.0.0.1:${address.port}/mock/wave/checkout/${sessionId}`;
+}
 
 async function mockBase(provider: "orange" | "wave" | "mtn"): Promise<string> { const server = createDevServer("http://127.0.0.1:65534/webhook"); servers.push(server); await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve)); const address = server.address(); if (address === null || typeof address === "string") throw new Error("Expected server address"); return `http://127.0.0.1:${address.port}/mock/${provider}`; }

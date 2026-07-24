@@ -24,6 +24,8 @@ class TestWaveProvider(ProviderContractTests):
         def checkout(request: httpx.Request) -> httpx.Response:
             session_id = request.url.path.rsplit("/", 1)[-1]
             if session_id == self.timeout_session_id: return httpx.Response(503, json={})
+            if session_id == self.api_error_session_id:
+                return httpx.Response(400, json={"code": "insufficient-funds", "message": "Wave code field error"})
             return httpx.Response(200, json={
                 "amount": sys.maxsize if session_id == self.unusual_refund_session_id else 1000,
                 **(
@@ -48,6 +50,10 @@ class TestWaveProvider(ProviderContractTests):
     def failed_payment_error(self) -> PaymentError: return PaymentError.INSUFFICIENT_FUNDS
     @property
     def timeout_session_id(self) -> str: return "contract-timeout"
+    @property
+    def api_error_session_id(self) -> str: return "wave-api-error"
+    @property
+    def api_error_expected_error(self) -> PaymentError: return PaymentError.INSUFFICIENT_FUNDS
     @property
     def valid_webhook(self) -> tuple[str, dict[str, str], PaymentEvent]:
         raw = '{"id":"event-1","type":"checkout.session.completed","data":{"id":"wave-1","client_reference":"contract-success","payment_status":"succeeded","when_completed":"2026-07-21T12:00:00Z"}}'

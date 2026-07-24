@@ -16,7 +16,7 @@ abstract class AbstractProviderContract extends TestCase
 {
     abstract protected function createProvider(?WebhookEventStoreInterface $webhookEventStore = null): PaymentProviderInterface;
 
-    /** @return array{request: PaymentRequest, failedSessionId: string, failedPaymentError: PaymentError, timeoutSessionId: string, validWebhook: array{rawBody: string, headers: array<string, string>, id: string, sessionId: string, status: PaymentStatus}, invalidWebhook: array{rawBody: string, headers: array<string, string>}, refund: array{sessionId: string, originalAmount: int, unusualOriginalSessionId: string, unusualOriginalAmount: int, partialAmount: int, fullAmount: int, supported: bool, status: PaymentStatus}, expiration: array{sessionId: string, supported: bool, webhook?: array{rawBody: string, headers: array<string, string>, id: string, sessionId: string, status: PaymentStatus, occurredAt: string}}} */
+    /** @return array{request: PaymentRequest, failedSessionId: string, failedPaymentError: PaymentError, timeoutSessionId: string, validWebhook: array{rawBody: string, headers: array<string, string>, id: string, sessionId: string, status: PaymentStatus}, invalidWebhook: array{rawBody: string, headers: array<string, string>}, apiError?: array{sessionId: string, expectedError: PaymentError}, refund: array{sessionId: string, originalAmount: int, unusualOriginalSessionId: string, unusualOriginalAmount: int, partialAmount: int, fullAmount: int, supported: bool, status: PaymentStatus}, expiration: array{sessionId: string, supported: bool, webhook?: array{rawBody: string, headers: array<string, string>, id: string, sessionId: string, status: PaymentStatus, occurredAt: string}}} */
     abstract protected function contractFixture(): array;
 
     public function testInitiatePaymentAndCheckStatusSuccess(): void
@@ -58,6 +58,21 @@ abstract class AbstractProviderContract extends TestCase
         $fixture = $this->contractFixture()['invalidWebhook'];
         $this->expectException(\Throwable::class);
         $this->createProvider()->handleWebhook($fixture['rawBody'], $fixture['headers']);
+    }
+
+    public function testApiErrorCodeFieldMapped(): void
+    {
+        $apiError = $this->contractFixture()['apiError'] ?? null;
+        if ($apiError === null) {
+            $this->markTestSkipped('Provider has no API error code fixture.');
+        }
+
+        try {
+            $this->createProvider()->checkStatus($apiError['sessionId']);
+            self::fail('Expected an API error response to be rejected.');
+        } catch (ProviderException $exception) {
+            self::assertSame($apiError['expectedError'], $exception->paymentError);
+        }
     }
 
     public function testPartialRefund(): void

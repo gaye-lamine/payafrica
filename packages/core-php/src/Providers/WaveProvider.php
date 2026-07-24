@@ -152,9 +152,9 @@ final class WaveProvider implements PaymentProviderInterface
         }
         if ($response->getStatusCode() >= 400) {
             $payload = $this->json($response);
-            $code = (string) ($payload['error_code'] ?? '');
+            $code = (string) ($payload['error_code'] ?? $payload['code'] ?? '');
             $error = $this->errorFor($response->getStatusCode(), $code);
-            throw new ProviderException($error, (string) ($payload['error_message'] ?? 'Wave request failed'));
+            throw new ProviderException($error, (string) ($payload['error_message'] ?? $payload['message'] ?? 'Wave request failed'));
         }
         return $response;
     }
